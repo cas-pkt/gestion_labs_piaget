@@ -31,7 +31,7 @@
 						<h3 class="text-center mb-4">Iniciar sesion</h3>
 						<form action="#" class="login-form" id="loginForm">
 							<div class="form-group">
-								<input id="correo" type="email" class="form-control rounded-left"
+								<input id="correo" type="email" autocomplete="email" class="form-control rounded-left"
 									placeholder="Correo electrónico" required>
 							</div>
 							<div class="form-group d-flex">
@@ -41,7 +41,7 @@
 							<div class="form-group d-md-flex">
 								<div class="w-50">
 									<label class="checkbox-wrap checkbox-primary">Recuerdame
-										<input type="checkbox" checked>
+										<input id="rememberMe" type="checkbox" checked>
 										<span class="checkmark"></span>
 									</label>
 								</div>
@@ -66,51 +66,8 @@
 	<script src="styles/js/bootstrap.min.js"></script>
 	<script src="styles/js/main.js"></script>
 	<!-- Use color azul #11319E 
-     En boton de iniciar sesion use verde #64C466-->
-	<script>
-		document.getElementById("loginForm").addEventListener("submit", async function (event) {
-			event.preventDefault(); // Evita la recarga de la página
-
-			const correo = document.getElementById("correo").value;
-			const password = document.getElementById("password").value;
-			const message = document.getElementById("message");
-
-			try {
-				const response = await fetch("http://localhost:3000/login", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json"
-					},
-					body: JSON.stringify({ correo, password })
-				});
-
-				const data = await response.json();
-
-				// Mostrar el mensaje
-				message.style.display = "block";
-				message.textContent = data.message;
-
-				if (response.ok) {
-					message.classList.remove("alert-danger");
-					message.classList.add("alert-success");
-
-					// Redirigir después de 2 segundos
-					setTimeout(() => {
-						window.location.href = "crearReporte.html";
-					}, 1000);
-				} else {
-					message.classList.remove("alert-success");
-					message.classList.add("alert-danger");
-				}
-			} catch (error) {
-				message.style.display = "block";
-				message.textContent = "Error en la conexión con el servidor.";
-				message.classList.remove("alert-success");
-				message.classList.add("alert-danger");
-			}
-		});
-
-	</script>
+     En boton de iniciar sesion use verde #64C466, YANO JAJAJA-->
+	<script src="js/login.js"></script>
 </body>
 
 </html>
