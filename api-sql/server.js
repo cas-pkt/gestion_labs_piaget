@@ -31,8 +31,8 @@ const dbConfig = {
 };
 
 sql.connect(dbConfig)
-    .then(() => console.log("✅ Conexión exitosa a SQL Server"))
-    .catch(err => console.error("❌ Error en la conexión a SQL Server:", err));
+    .then(() => console.log("Conexión exitosa a SQL Server :3!"))
+    .catch(err => console.error(" :( Error en la conexión a SQL Server:", err));
 
 // REGISTRAR
 app.post("/register", async (req, res) => {
@@ -66,7 +66,12 @@ app.post("/login", async (req, res) => {
         let pool = await sql.connect(dbConfig);
         let result = await pool.request()
             .input("correo", sql.NVarChar, correo)
-            .query("SELECT * FROM Usuarios WHERE correo = @correo");
+            .query(`
+                SELECT u.id_usuario, u.nombre, u.correo, u.password_hash, r.id_rol 
+                FROM Usuarios u
+                INNER JOIN UsuarioRoles r ON u.id_usuario = r.id_usuario
+                WHERE u.correo = @correo
+            `);
 
         if (result.recordset.length === 0) {
             return res.status(400).json({ message: "Correo no registrado" });
@@ -74,23 +79,121 @@ app.post("/login", async (req, res) => {
 
         let user = result.recordset[0];
 
-        // Verificar la contraseña encriptada
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
             return res.status(400).json({ message: "Contraseña incorrecta" });
         }
+
+        
         res.json({
             message: "Inicio de sesión exitoso",
             user: {
                 id_usuario: user.id_usuario,
-                correo: user.correo
+                nombre: user.nombre,  
+                correo: user.correo,
+                id_rol: user.id_rol
             }
         });
 
     } catch (err) {
+        console.error("Error en el servidor:", err);
         res.status(500).json({ message: "Error en el servidor", error: err.message });
     }
 });
+
+//Crear Reportes
+
+app.post("/crearReporte", async (req, res) => {
+    const { id_usuario, id_equipo, id_laboratorio, descripcion } = req.body;
+
+    try {
+        let pool = await sql.connect(dbConfig);
+        await pool.request()
+            .input("id_usuario", sql.Int, id_usuario)
+            .input("id_equipo", sql.Int, id_equipo)
+            .input("id_laboratorio", sql.Int, id_laboratorio)
+            .input("descripcion", sql.NVarChar, descripcion)
+            .input("fecha_hora", sql.DateTime, new Date()) // Fecha y hora actuales
+            .input("estatus", sql.NVarChar, "Pendiente") // Estatus por defecto
+            .query(`
+                INSERT INTO Reportes (id_usuario, id_equipo, id_laboratorio, descripcion, fecha_hora, estatus) 
+                VALUES (@id_usuario, @id_equipo, @id_laboratorio, @descripcion, @fecha_hora, @estatus)
+            `);
+
+        res.json({ message: "✅ Reporte creado exitosamente", estatus: "Pendiente" });
+    } catch (err) {
+        res.status(500).json({ message: "❌ Error en el servidor", error: err.message });
+    }
+});
+
+
+//obtener equipos para verlos en el dropdown
+app.get("/equipos", async (req, res) => {
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request().query("SELECT id_equipo, numero_equipo FROM Equipos");
+
+        res.json(result.recordset); 
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener los equipos", error: err.message });
+    }
+});
+
+//obtener laboratorios para verlos en el dropdown
+
+app.get("/laboratorios", async (req, res) => {
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request().query("SELECT id_laboratorio, nombre_laboratorio FROM Laboratorios");
+
+        res.json(result.recordset); 
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener los laboratorios", error: err.message });
+    }
+});
+
+//Equipos segun el laboratorio
+app.get("/equipos/:id_laboratorio", async (req, res) => {
+    const { id_laboratorio } = req.params;
+
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("id_laboratorio", sql.Int, id_laboratorio)
+            .query("SELECT id_equipo, numero_equipo FROM Equipos WHERE id_laboratorio = @id_laboratorio");
+
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener equipos", error: err.message });
+    }
+});
+
+//Ver reportes
+app.get("/reportes/:id_usuario", async (req, res) => {
+    const { id_usuario } = req.params;
+
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("id_usuario", sql.Int, id_usuario)
+            .query(`
+                SELECT r.id_reporte, r.descripcion, r.fecha_hora, r.estatus, 
+                       e.numero_equipo, l.nombre_laboratorio
+                FROM Reportes r
+                INNER JOIN Equipos e ON r.id_equipo = e.id_equipo
+                INNER JOIN Laboratorios l ON r.id_laboratorio = l.id_laboratorio
+                WHERE r.id_usuario = @id_usuario
+                ORDER BY r.fecha_hora DESC
+            `);
+
+        res.json(result.recordset);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener reportes", error: error.message });
+    }
+});
+
+
+
 
 const open = require("open");
 
