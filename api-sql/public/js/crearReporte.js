@@ -88,7 +88,6 @@ document.getElementById("enviarReporte").addEventListener("click", async functio
 
     const id_usuario = usuario.id_usuario;
 
-    // Verificar que la descripción no esté vacía
     if (descripcion.trim() === "") {
         Swal.fire({
             icon: "warning",
@@ -115,7 +114,7 @@ document.getElementById("enviarReporte").addEventListener("click", async functio
                 text: "El reporte se ha enviado correctamente.",
                 confirmButtonText: "Aceptar"
             }).then(() => {
-                window.location.reload(); // Recargar la página después de enviar el reporte
+                window.location.reload(); 
             });
         } else {
             Swal.fire({

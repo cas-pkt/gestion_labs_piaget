@@ -1,7 +1,6 @@
 document.getElementById("registerForm").addEventListener("submit", async function (event) {
-    event.preventDefault(); // Evita recargar la página
+    event.preventDefault(); 
 
-    // Capturar los valores del formulario
     const nombre = document.getElementById("nombre").value;
     const correo = document.getElementById("correo").value;
     const password = document.getElementById("password").value;
@@ -22,7 +21,7 @@ document.getElementById("registerForm").addEventListener("submit", async functio
         if (response.ok) {
             message.style.color = "green";
             message.textContent = data.message;
-            document.getElementById("registerForm").reset(); // Limpiar el formulario
+            document.getElementById("registerForm").reset(); 
         } else {
             message.style.color = "red";
             message.textContent = data.message;

@@ -10,7 +10,6 @@ const bcrypt = require("bcrypt");
 app.use(express.json());
 app.use(cors());
 
-// Middleware para servir archivos estáticos
 app.use(express.static(path.join(__dirname, "public")));
 
 // Ruta para abrir login.html

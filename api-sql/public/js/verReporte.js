@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             row.innerHTML = `
                 <td>${reporte.id_reporte}</td>
-                <td>Equipo ${reporte.numero_equipo}</td>
+                <td>${reporte.numero_equipo}</td>
                 <td>${reporte.nombre_laboratorio}</td>
                 <td>${new Date(reporte.fecha_hora).toLocaleString()}</td>
                 <td>
