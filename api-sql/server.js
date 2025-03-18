@@ -239,7 +239,7 @@ app.get("/api/reportes", async (req, res) => {
         let pool = await sql.connect(dbConfig);
         let result = await pool.request().query(`
             SELECT r.id_reporte, r.descripcion, r.fecha_hora, r.estatus, 
-                   e.numero_equipo, l.nombre_laboratorio
+            e.numero_equipo, l.nombre_laboratorio
             FROM Reportes r
             INNER JOIN Equipos e ON r.id_equipo = e.id_equipo
             INNER JOIN Laboratorios l ON r.id_laboratorio = l.id_laboratorio
@@ -287,6 +287,278 @@ app.get("/api/historialReportes", async (req, res) => {
     } catch (error) {
         console.error("❌ Error al obtener historial de reportes:", error);
         res.status(500).json({ message: "Error al obtener historial de reportes", error: error.message });
+    }
+});
+
+// Obtener usuarios
+app.get("/api/usuarios", async (req, res) => {
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request().query("SELECT id_usuario, nombre, correo FROM Usuarios");
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener los usuarios", error: err.message });
+    }
+});
+
+
+// Obtener un usuario por su ID
+app.get("/api/usuarios/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("id", sql.Int, id)
+            .query("SELECT id_usuario, nombre, correo, laboratorio, nivel FROM Usuarios WHERE id_usuario = @id");
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        res.json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener el usuario", error: err.message });
+    }
+});
+
+//Agregar un usuario
+app.post("/api/usuarios", async (req, res) => {
+    try {
+        console.log("📩 Recibiendo datos:", req.body); // 👀 Verificar los datos
+
+        const { nombre, correo, laboratorio, nivel, rol } = req.body;
+
+        // 🛑 Validaciones
+        if (!nombre || !correo || !laboratorio || !nivel || !rol) {
+            return res.status(400).json({ message: "Todos los campos son obligatorios" });
+        }
+
+        if (isNaN(nivel) || nivel < 1 || nivel > 9) {
+            return res.status(400).json({ message: "El nivel debe estar entre 1 y 9" });
+        }
+
+        if (!["Usuario", "Administrador"].includes(rol)) {
+            return res.status(400).json({ message: "El rol debe ser 'Usuario' o 'Administrador'" });
+        }
+
+        let pool = await sql.connect(dbConfig);
+        await pool.request()
+            .input("nombre", sql.NVarChar, nombre)
+            .input("correo", sql.NVarChar, correo)
+            .input("laboratorio", sql.NVarChar, laboratorio)
+            .input("nivel", sql.Int, nivel)
+            .input("rol", sql.NVarChar, rol)
+            .query("INSERT INTO Usuarios (nombre, correo, laboratorio, nivel, rol) VALUES (@nombre, @correo, @laboratorio, @nivel, @rol)");
+
+        res.status(201).json({ message: "Usuario agregado correctamente" });
+    } catch (err) {
+        console.error("❌ Error al agregar usuario:", err.message);
+        res.status(500).json({ message: "Error interno del servidor", error: err.message });
+    }
+});
+
+
+// Actualizar un usuario
+app.post("/api/usuarios", async (req, res) => {
+    try {
+        const { nombre, correo, laboratorio, nivel } = req.body;
+
+        if (!nombre || !correo || !laboratorio || !nivel) {
+            return res.status(400).json({ message: "Todos los campos son obligatorios" });
+        }
+
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("nombre", sql.NVarChar, nombre)
+            .input("correo", sql.NVarChar, correo)
+            .input("laboratorio", sql.NVarChar, laboratorio)
+            .input("nivel", sql.NVarChar, nivel)
+            .query("INSERT INTO Usuarios (nombre, correo, laboratorio, nivel) VALUES (@nombre, @correo, @laboratorio, @nivel)");
+
+        res.status(201).json({ message: "Usuario agregado correctamente" });
+    } catch (err) {
+        res.status(500).json({ message: "Error al agregar el usuario", error: err.message });
+    }
+});
+
+// Actualizar un usuario
+app.put("/api/usuarios/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre, correo, laboratorio, nivel } = req.body;
+
+        if (!nombre || !correo || !laboratorio || !nivel) {
+            return res.status(400).json({ message: "Todos los campos son obligatorios" });
+        }
+
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("id", sql.Int, id)
+            .input("nombre", sql.NVarChar, nombre)
+            .input("correo", sql.NVarChar, correo)
+            .input("laboratorio", sql.NVarChar, laboratorio)
+            .input("nivel", sql.NVarChar, nivel)
+            .query("UPDATE Usuarios SET nombre = @nombre, correo = @correo, laboratorio = @laboratorio, nivel = @nivel WHERE id_usuario = @id");
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        res.json({ message: "Usuario actualizado correctamente" });
+    } catch (err) {
+        res.status(500).json({ message: "Error al actualizar el usuario", error: err.message });
+    }
+});
+
+// Eliminar un usuario
+app.delete("/api/usuarios/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("id", sql.Int, id)
+            .query("DELETE FROM Usuarios WHERE id_usuario = @id");
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        res.json({ message: "Usuario eliminado correctamente" });
+    } catch (err) {
+        res.status(500).json({ message: "Error al eliminar el usuario", error: err.message });
+    }
+});
+
+// Obtener lista de laboratorios
+app.get("/api/laboratorios", async (req, res) => {
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request().query("SELECT id_laboratorio, nombre_laboratorio, id_nivel FROM Laboratorios");
+
+        // Asegurar que el JSON usa claves correctas
+        const laboratorios = result.recordset.map(lab => ({
+            id_laboratorio: lab.id_laboratorio,  // 👈 Ajustar el nombre de clave
+            nombre_laboratorio: lab.nombre_laboratorio,
+            id_nivel: lab.id_nivel
+        }));
+
+        res.json(laboratorios);
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener laboratorios", error: err.message });
+    }
+});
+
+// 👉 Obtener todos los laboratorios con su nivel
+app.get("/api/laboratorios", async (req, res) => {
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request().query("SELECT id_laboratorio, nombre_laboratorio, id_nivel FROM Laboratorios");
+
+        res.json(result.recordset); // 👈 Aquí se envían los datos al frontend
+    } catch (err) {
+        console.error("❌ Error al obtener laboratorios:", err);
+        res.status(500).json({ message: "Error al obtener laboratorios", error: err.message });
+    }
+});
+
+app.get('/api/roles', async (req, res) => {
+    try {
+        const roles = await db.query('SELECT id_rol, nombre_rol FROM Roles');
+        res.json(roles);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener roles', error: error.message });
+    }
+});
+
+app.get("/api/laboratorios/:id/equipos", async (req, res) => {
+    const { id } = req.params;
+    
+    if (!id || isNaN(id)) {
+        return res.status(400).json({ message: "ID de laboratorio no válido" });
+    }
+
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("id_laboratorio", sql.Int, id)
+            .query("SELECT id_equipo, numero_equipo, estado FROM Equipos WHERE id_laboratorio = @id_laboratorio");
+
+        res.json(result.recordset);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener equipos", error: error.message });
+    }
+});
+
+
+
+
+
+
+app.post("/api/laboratorios", async (req, res) => {
+    try {
+        const { nombre_laboratorio, id_nivel } = req.body;
+
+        if (!nombre_laboratorio || !id_nivel) {
+            return res.status(400).json({ message: "⚠️ Todos los campos son obligatorios." });
+        }
+
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("nombre_laboratorio", sql.NVarChar, nombre_laboratorio)
+            .input("id_nivel", sql.Int, id_nivel)
+            .query("INSERT INTO Laboratorios (nombre_laboratorio, id_nivel) VALUES (@nombre_laboratorio, @id_nivel)");
+
+        res.json({ message: "✅ Laboratorio agregado exitosamente." });
+    } catch (err) {
+        console.error("❌ Error al agregar laboratorio:", err);
+        res.status(500).json({ message: "Error en el servidor", error: err.message });
+    }
+});
+
+
+
+
+// Actualizar un laboratorio
+app.put("/api/laboratorios/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre, nivel } = req.body;
+
+        if (!nombre || !nivel) {
+            return res.status(400).json({ message: "Nombre y nivel son obligatorios." });
+        }
+
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("id", sql.Int, id)
+            .input("nombre", sql.NVarChar, nombre)
+            .input("nivel", sql.Int, nivel)
+            .query("UPDATE Laboratorios SET nombre = @nombre, nivel = @nivel WHERE id_laboratorio = @id");
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: "Laboratorio no encontrado." });
+        }
+
+        res.json({ message: "Laboratorio actualizado correctamente" });
+
+    } catch (err) {
+        res.status(500).json({ message: "Error al actualizar laboratorio", error: err.message });
+    }
+});
+
+
+// Eliminar un laboratorio
+app.delete("/api/laboratorios/:id", async (req, res) => {
+    try {
+        let pool = await sql.connect(dbConfig);
+        await pool.request()
+            .input("id", sql.Int, req.params.id)
+            .query("DELETE FROM Laboratorios WHERE id_laboratorio = @id");
+
+        res.json({ message: "Laboratorio eliminado correctamente" });
+    } catch (err) {
+        res.status(500).json({ message: "Error al eliminar laboratorio", error: err.message });
     }
 });
 

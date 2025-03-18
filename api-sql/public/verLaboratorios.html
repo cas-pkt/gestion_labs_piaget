@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Laboratorio | Gestión de Laboratorios</title>
+    <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
+    <link rel="icon" href="styles/images/logo-piaget.png" type="image/x-icon" />
+
+    <!-- Fonts and icons -->
+    <script src="styles/assets/js/plugin/webfont/webfont.min.js"></script>
+    <script>
+        WebFont.load({
+            google: { families: ["Public Sans:300,400,500,600,700"] },
+            custom: {
+                families: [
+                    "Font Awesome 5 Solid",
+                    "Font Awesome 5 Regular",
+                    "Font Awesome 5 Brands",
+                    "simple-line-icons",
+                ],
+                urls: ["styles/assets/css/fonts.min.css"],
+            },
+            active: function () {
+                sessionStorage.fonts = true;
+            },
+        });
+    </script>
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="styles/assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="styles/assets/css/plugins.min.css" />
+    <link rel="stylesheet" href="styles/assets/css/kaiadmin.min.css" />
+    <link rel="shortcut icon" href="styles/images/logo-piaget.png" type="image/x-icon">
+</head>
+
+<body>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar" data-background-color="dark">
+            <div class="sidebar-logo">
+                <!-- Logo Header -->
+                <div class="logo-header" data-background-color="dark">
+                    <a href="index.html" class="logo">
+                        <img src="styles/images/logo-ancho.png" alt="navbar brand" class="navbar-brand" height="50" />
+                    </a>
+                    <div class="nav-toggle">
+                        <button class="btn btn-toggle toggle-sidebar">
+                            <i class="gg-menu-right"></i>
+                        </button>
+                        <button class="btn btn-toggle sidenav-toggler">
+                            <i class="gg-menu-left"></i>
+                        </button>
+                    </div>
+                    <button class="topbar-toggler more">
+                        <i class="gg-more-vertical-alt"></i>
+                    </button>
+                </div>
+                <!-- End Logo Header -->
+            </div>
+            <div class="sidebar-wrapper scrollbar scrollbar-inner">
+                <div class="sidebar-content">
+                    <ul class="nav nav-secondary">
+                        <li class="nav-item">
+                            <a href="gestionReportes.html" class="collapsed">
+                                <i class="fas fa-file"></i>
+                                <p>Seguimiento de reportes</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="historialReportes.html">
+                                <i class="fas fa-history"></i>
+                                <p>Ver Historial</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="verUsuarios.html">
+                                <i class="fas fa-users"></i>
+                                <p>Gestionar usuarios</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item active">
+                            <a href="verLaboratorios.html">
+                                <i class="fas fa-desktop"></i>
+                                <p>Laboratorios</p>
+                            </a>
+
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- End Sidebar -->
+
+        <div class="main-panel">
+            <div class="main-header">
+                <div class="main-header-logo">
+                    <!-- Logo Header -->
+                    <div class="logo-header" data-background-color="dark">
+                        <a href="crearReporte.html" class="logo">
+                            <img src="styles/images/logo-piaget.png" alt="navbar brand" class="navbar-brand"
+                                height="20" />
+                        </a>
+                    </div>
+                    <!-- End Logo Header -->
+                </div>
+                <!-- Navbar Header -->
+                <nav class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom">
+                    <div class="container-fluid">
+                        <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
+                            <li class="nav-item topbar-icon dropdown hidden-caret">
+                                <a class="nav-link dropdown-toggle" href="#" id="notifDropdown" role="button"
+                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fa fa-bell"></i>
+                                    <span class="notification">4</span>
+                                </a>
+                                <ul class="dropdown-menu notif-box animated fadeIn" aria-labelledby="notifDropdown">
+                                    <li>
+                                        <div class="notif-center">
+                                            <a href="#">
+                                                <div class="notif-icon notif-primary">
+                                                    <i class="fa fa-user-plus"></i>
+                                                </div>
+                                                <div class="notif-content">
+                                                    <span class="block"> New user registered </span>
+                                                    <span class="time">5 minutes ago</span>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item topbar-user dropdown hidden-caret">
+                                <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#">
+                                    <span class="profile-username">Hi, <span id="userName">Usuario</span></span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-user animated fadeIn">
+                                    <li>
+                                        <div class="user-box">
+                                            <div class="u-text">
+                                                <h4 id="userBoxName">Usuario</h4>
+                                                <p id="userEmail" class="text-muted">correo@example.com</p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#" id="logout">Cerrar sesión</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <!-- End Navbar -->
+            </div>
+
+            <div class="container">
+                <div class="container mt-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0">Gestión de Laboratorios</h4>
+                            <button class="btn btn-primary" id="btnAgregarLaboratorio">
+                                <i class="fas fa-plus"></i> Agregar Laboratorio
+                            </button>
+                        </div>
+
+                        <!-- Pestañas de Laboratorios -->
+                        <ul class="nav nav-tabs mt-3" id="laboratorioTabs"></ul>
+
+                        <div class="tab-content p-3" id="laboratorioContent">
+                            <!-- Contenido dinámico -->
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Modal para Agregar Laboratorio -->
+                <div class="modal fade" id="modalLaboratorio" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Agregar Laboratorio</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="formLaboratorio">
+                                    <div class="mb-3">
+                                        <label for="nombreLaboratorio" class="form-label">Nombre</label>
+                                        <input type="text" class="form-control" id="nombreLaboratorio" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="nivelLaboratorio" class="form-label">Nivel</label>
+                                        <select id="nivelLaboratorio" class="form-control">
+                                            <option value="1">Primero Primaria</option>
+                                            <option value="2">Segundo Primaria</option>
+                                            <option value="3">Tercero Primaria</option>
+                                            <option value="4">Cuarto Primaria</option>
+                                            <option value="5">Quinto Primaria</option>
+                                            <option value="6">Sexto Primaria</option>
+                                            <option value="7">Primero Secundaria</option>
+                                            <option value="8">Segundo Secundaria</option>
+                                            <option value="9">Tercero Secundaria</option>
+                                        </select>
+
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">Guardar</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal para Ver Estado del Equipo -->
+                <div class="modal fade" id="modalEquipo" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Detalles del Equipo</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" id="detalleEquipo">
+                                <!-- Contenido dinámico -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="footer">
+                    <div class="container-fluid d-flex justify-content-between">
+                        <div>Instituto Piaget</div>
+                    </div>
+                </footer>
+            </div>
+
+        </div>
+
+        <!--   Core JS Files   -->
+    <script src="styles/assets/js/core/jquery-3.7.1.min.js"></script>
+    <script src="styles/assets/js/core/popper.min.js"></script>
+    <script src="styles/assets/js/core/bootstrap.min.js"></script>
+
+    <!-- jQuery Scrollbar -->
+    <script src="styles/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+
+    <!-- Chart JS -->
+    <script src="styles/assets/js/plugin/chart.js/chart.min.js"></script>
+
+    <!-- jQuery Sparkline -->
+    <script src="styles/assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js"></script>
+
+    <!-- Chart Circle -->
+    <script src="styles/assets/js/plugin/chart-circle/circles.min.js"></script>
+
+    <!-- Datatables -->
+    <script src="styles/assets/js/plugin/datatables/datatables.min.js"></script>
+
+    <!-- Bootstrap Notify -->
+    <script src="styles/assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
+
+    <!-- jQuery Vector Maps -->
+    <script src="styles/assets/js/plugin/jsvectormap/jsvectormap.min.js"></script>
+    <script src="styles/assets/js/plugin/jsvectormap/world.js"></script>
+
+    <!-- Sweet Alert -->
+    <script src="styles/assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+
+    <!-- Kaiadmin JS -->
+    <script src="styles/assets/js/kaiadmin.min.js"></script>
+
+        <!-- Script para jalar los datos del laboratorio -->
+        <script src="js/gestionLaboratorios.js"></script>
+
+        <script>
+            $("#lineChart").sparkline([102, 109, 120, 99, 110, 105, 115], {
+                type: "line",
+                height: "70",
+                width: "100%",
+                lineWidth: "2",
+                lineColor: "#177dff",
+                fillColor: "rgba(23, 125, 255, 0.14)",
+            });
+    
+            $("#lineChart2").sparkline([99, 125, 122, 105, 110, 124, 115], {
+                type: "line",
+                height: "70",
+                width: "100%",
+                lineWidth: "2",
+                lineColor: "#f3545d",
+                fillColor: "rgba(243, 84, 93, .14)",
+            });
+    
+            $("#lineChart3").sparkline([105, 103, 123, 100, 95, 105, 115], {
+                type: "line",
+                height: "70",
+                width: "100%",
+                lineWidth: "2",
+                lineColor: "#ffa534",
+                fillColor: "rgba(255, 165, 52, .14)",
+            });
+        </script>
+
+        <!-- Script de Gestión de Laboratorios -->
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const listaLaboratorios = document.getElementById("laboratorioTabs");
+                const laboratorioContent = document.getElementById("laboratorioContent");
+
+                async function cargarLaboratorios() {
+                    const response = await fetch("http://localhost:3000/api/laboratorios");
+                    const laboratorios = await response.json();
+
+                    listaLaboratorios.innerHTML = "";
+                    laboratorioContent.innerHTML = "";
+
+                    laboratorios.forEach((lab, index) => {
+                        listaLaboratorios.innerHTML += `
+                            <li class="nav-item">
+                                <a class="nav-link ${index === 0 ? 'active' : ''}" data-bs-toggle="tab" href="#lab-${lab.id_laboratorio}">
+                                    ${lab.nombre_laboratorio}
+                                </a>
+                            </li>`;
+
+                        laboratorioContent.innerHTML += `
+                            <div class="tab-pane fade ${index === 0 ? 'show active' : ''}" id="lab-${lab.id_laboratorio}">
+                                <div class="row p-3" id="equipos-lab-${lab.id_laboratorio}">
+                                </div>
+                            </div>`;
+
+                        cargarEquipos(lab.id_laboratorio);
+                    });
+                }
+
+                async function cargarEquipos(labId) {
+                    const response = await fetch(`http://localhost:3000/api/laboratorios/${labId}/equipos`);
+                    const equipos = await response.json();
+
+                    console.log(`📥 Equipos recibidos para el laboratorio ${labId}:`, equipos);
+
+                    const container = document.getElementById(`equipos-lab-${labId}`);
+                    if (!container) {
+                        console.error(`⚠️ Contenedor no encontrado para el laboratorio ${labId}`);
+                        return;
+                    }
+
+                    container.innerHTML = equipos.map(equipo => `
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h5>PC-${equipo.id_equipo}</h5>
+                                    <p>Estado: ${equipo.estado || 'Desconocido'}</p>
+                                    <button class="btn btn-info btn-sm" onclick="verEquipo(${equipo.id_equipo})">
+                                        Ver Reportes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`).join('');
+                }
+
+                cargarLaboratorios();
+            });
+        </script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const user = JSON.parse(localStorage.getItem("user"));
+
+                if (user) {
+                    document.getElementById("userName").textContent = user.nombre;
+                    document.getElementById("userBoxName").textContent = user.nombre;
+                    document.getElementById("userEmail").textContent = user.correo;
+                }
+            });
+
+            document.getElementById("logout").addEventListener("click", function () {
+                localStorage.removeItem("user");
+                window.location.href = "login.html";
+            });
+        </script>
+
+
+</body>
+
+</html>
