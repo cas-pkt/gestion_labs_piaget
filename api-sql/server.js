@@ -301,24 +301,37 @@ app.get("/api/usuarios", async (req, res) => {
 });
 
 
-// Obtener un usuario por su ID
 app.get("/api/usuarios/:id", async (req, res) => {
     try {
         const { id } = req.params;
         let pool = await sql.connect(dbConfig);
         let result = await pool.request()
             .input("id", sql.Int, id)
-            .query("SELECT id_usuario, nombre, correo, laboratorio, nivel FROM Usuarios WHERE id_usuario = @id");
+            .query(`
+                SELECT u.id_usuario, u.nombre, u.correo, 
+                       l.nombre_laboratorio AS laboratorio, 
+                       n.nombre_nivel AS nivel,   -- ⚠️ Aquí cambiamos 'nivel' por 'nombre_nivel'
+                       r.nombre_rol AS rol
+                FROM Usuarios u
+                LEFT JOIN Laboratorios l ON u.id_laboratorio = l.id_laboratorio
+                LEFT JOIN Niveles n ON u.id_nivel = n.id_nivel  -- ⚠️ Esto obtiene 'nombre_nivel'
+                LEFT JOIN UsuarioRoles ur ON u.id_usuario = ur.id_usuario
+                LEFT JOIN Roles r ON ur.id_rol = r.id_rol
+                WHERE u.id_usuario = @id
+            `);
 
         if (result.recordset.length === 0) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        res.json(result.recordset[0]);
+        res.json(result.recordset[0]);  // 🔥 Enviamos el usuario con el nivel correcto
     } catch (err) {
+        console.error("❌ Error al obtener el usuario:", err);
         res.status(500).json({ message: "Error al obtener el usuario", error: err.message });
     }
 });
+
+
 
 //Agregar un usuario
 app.post("/api/usuarios", async (req, res) => {
@@ -384,30 +397,69 @@ app.post("/api/usuarios", async (req, res) => {
 app.put("/api/usuarios/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, correo, laboratorio, nivel } = req.body;
+        let { nombre, correo, laboratorio, nivel, rol } = req.body;
 
-        if (!nombre || !correo || !laboratorio || !nivel) {
-            return res.status(400).json({ message: "Todos los campos son obligatorios" });
+        // 🔥 Asegurar que los valores sean enteros
+        laboratorio = laboratorio ? parseInt(laboratorio) : null;
+        nivel = nivel ? parseInt(nivel) : null;
+        rol = rol ? parseInt(rol) : null;
+
+        // 🛑 Validaciones
+        if (laboratorio !== null && isNaN(laboratorio)) {
+            return res.status(400).json({ message: "El laboratorio debe ser un número válido" });
+        }
+        if (nivel !== null && isNaN(nivel)) {
+            return res.status(400).json({ message: "El nivel debe ser un número válido" });
+        }
+        if (rol !== null && isNaN(rol)) {
+            return res.status(400).json({ message: "El rol debe ser un número válido" });
         }
 
         let pool = await sql.connect(dbConfig);
+
+        // 🔹 1️⃣ Actualizar los datos en la tabla Usuarios
         let result = await pool.request()
             .input("id", sql.Int, id)
             .input("nombre", sql.NVarChar, nombre)
             .input("correo", sql.NVarChar, correo)
-            .input("laboratorio", sql.NVarChar, laboratorio)
-            .input("nivel", sql.NVarChar, nivel)
-            .query("UPDATE Usuarios SET nombre = @nombre, correo = @correo, laboratorio = @laboratorio, nivel = @nivel WHERE id_usuario = @id");
+            .input("id_laboratorio", laboratorio !== null ? sql.Int : sql.NVarChar, laboratorio)
+            .input("id_nivel", nivel !== null ? sql.Int : sql.NVarChar, nivel)
+            .query(`
+                UPDATE Usuarios 
+                SET nombre = @nombre, correo = @correo, id_laboratorio = @id_laboratorio, id_nivel = @id_nivel
+                WHERE id_usuario = @id
+            `);
 
         if (result.rowsAffected[0] === 0) {
-            return res.status(404).json({ message: "Usuario no encontrado" });
+            return res.status(404).json({ message: "Usuario no encontrado." });
         }
 
-        res.json({ message: "Usuario actualizado correctamente" });
+        // 🔹 2️⃣ Verificar si el usuario ya tiene un rol asignado en UsuarioRoles
+        let checkRole = await pool.request()
+            .input("id_usuario", sql.Int, id)
+            .query("SELECT id_rol FROM UsuarioRoles WHERE id_usuario = @id_usuario");
+
+        if (checkRole.recordset.length > 0) {
+            // Si ya tiene un rol, actualizamos el existente
+            await pool.request()
+                .input("id_usuario", sql.Int, id)
+                .input("id_rol", sql.Int, rol)
+                .query("UPDATE UsuarioRoles SET id_rol = @id_rol WHERE id_usuario = @id_usuario");
+        } else {
+            // Si no tiene un rol, lo insertamos
+            await pool.request()
+                .input("id_usuario", sql.Int, id)
+                .input("id_rol", sql.Int, rol)
+                .query("INSERT INTO UsuarioRoles (id_usuario, id_rol) VALUES (@id_usuario, @id_rol)");
+        }
+
+        res.json({ message: "✅ Usuario actualizado correctamente" });
+
     } catch (err) {
-        res.status(500).json({ message: "Error al actualizar el usuario", error: err.message });
+        res.status(500).json({ message: "❌ Error al actualizar el usuario", error: err.message });
     }
 });
+
 
 // Eliminar un usuario
 app.delete("/api/usuarios/:id", async (req, res) => {
@@ -463,16 +515,21 @@ app.get("/api/laboratorios", async (req, res) => {
 
 app.get('/api/roles', async (req, res) => {
     try {
-        const roles = await db.query('SELECT id_rol, nombre_rol FROM Roles');
-        res.json(roles);
+        let pool = await sql.connect(dbConfig);  // Aseguramos que se usa sql.connect correctamente
+        let result = await pool.request().query("SELECT id_rol, nombre_rol FROM Roles");
+
+        res.json(result.recordset);  // Devuelve la lista de roles correctamente
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener roles', error: error.message });
+        console.error("❌ Error al obtener roles:", error);
+        res.status(500).json({ message: "Error al obtener roles", error: error.message });
     }
 });
 
+
+
 app.get("/api/laboratorios/:id/equipos", async (req, res) => {
     const { id } = req.params;
-    
+
     if (!id || isNaN(id)) {
         return res.status(400).json({ message: "ID de laboratorio no válido" });
     }

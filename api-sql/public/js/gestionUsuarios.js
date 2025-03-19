@@ -15,19 +15,22 @@ document.addEventListener("DOMContentLoaded", async function () {
     const btnAgregarUsuario = document.getElementById("btnAgregarUsuario");
     const modalUsuario = new bootstrap.Modal(document.getElementById("modalUsuario"));
     const formUsuario = document.getElementById("formUsuario");
-    
+
     let usuarios = [];
     let editandoUsuario = null;
 
     async function cargarUsuarios() {
         try {
             const response = await fetch("http://localhost:3000/api/usuarios");
-            usuarios = await response.json();
+            if (!response.ok) throw new Error("Error al obtener los usuarios");
+    
+            const usuarios = await response.json();
             mostrarUsuarios(usuarios);
         } catch (error) {
             console.error("❌ Error al obtener usuarios:", error);
         }
     }
+    
 
     function mostrarUsuarios(lista) {
         listaUsuarios.innerHTML = "";
@@ -60,13 +63,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             try {
                 const response = await fetch(`http://localhost:3000/api/usuarios/${id}`);
                 const usuario = await response.json();
-                
+
                 document.getElementById("nombre").value = usuario.nombre || "";
                 document.getElementById("correo").value = usuario.correo || "";
                 document.getElementById("laboratorio").value = usuario.laboratorio || "";
                 document.getElementById("nivel").value = usuario.nivel || "";
                 document.getElementById("rol").value = usuario.rol || "";
-                
+
                 editandoUsuario = id;
                 modalUsuario.show();
             } catch (error) {
@@ -96,6 +99,64 @@ document.addEventListener("DOMContentLoaded", async function () {
         modalUsuario.hide();
         cargarUsuarios();
     });
+
+    // Evento para abrir el modal de edición
+    listaUsuarios.addEventListener("click", async (e) => {
+        if (e.target.classList.contains("btnEditar")) {
+            const id = e.target.dataset.id;
+            try {
+                const response = await fetch(`http://localhost:3000/api/usuarios/${id}`);
+                const usuario = await response.json();
+
+                if (!response.ok) {
+                    console.error("❌ Error al obtener usuario:", usuario.message);
+                    return;
+                }
+
+                document.getElementById("nombre").value = usuario.nombre || "";
+                document.getElementById("correo").value = usuario.correo || "";
+                document.getElementById("laboratorio").value = usuario.laboratorio || "";
+                document.getElementById("nivel").value = usuario.nivel || "";
+
+                await cargarRoles(usuario.rol);  // 🔥 Cargar roles al abrir el modal
+
+                editandoUsuario = id;
+                modalUsuario.show();
+            } catch (error) {
+                console.error("❌ Error al cargar usuario:", error);
+            }
+        }
+    });
+
+    // Función para cargar roles en el select
+    async function cargarRoles(rolSeleccionado = "") {
+        try {
+            const response = await fetch("http://localhost:3000/api/roles");
+            const roles = await response.json();
+
+            console.log("📥 Roles recibidos:", roles);  // 🔍 Verificar datos en la consola
+
+            if (response.ok) {
+                const selectRol = document.getElementById("rol");
+                selectRol.innerHTML = `<option value="" disabled>Selecciona un rol</option>`;
+
+                roles.forEach(r => {
+                    const option = document.createElement("option");
+                    option.value = r.id_rol;
+                    option.textContent = r.nombre_rol;
+                    if (r.id_rol == rolSeleccionado) {
+                        option.selected = true;
+                    }
+                    selectRol.appendChild(option);
+                });
+            } else {
+                console.error("❌ Error al obtener roles:", roles.message);
+            }
+        } catch (error) {
+            console.error("❌ Error en la solicitud de roles:", error);
+        }
+    }
+
 
     async function cargarLaboratorios() {
         try {
