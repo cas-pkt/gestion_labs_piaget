@@ -267,19 +267,26 @@
                                     <label for="nivel" class="form-label">Nivel</label>
                                     <select class="form-control" id="nivel" required>
                                         <option value="" selected disabled>Selecciona un nivel</option>
-                                        <option value="PrimeroPrimaria">Primero Primaria</option>
-                                        <option value="SegundoPrimaria">Segundo Primaria</option>
-                                        <option value="TerceroPrimaria">Tercero Primaria</option>
-                                        <option value="CuartoPrimaria">Cuarto Primaria</option>
-                                        <option value="QuintoPrimaria">Quinto Primaria</option>
-                                        <option value="SextoPrimaria">Sexto Primaria</option>
+                                        <option value="1">Primero Primaria</option>
+                                        <option value="2">Segundo Primaria</option>
+                                        <option value="3">Tercero Primaria</option>
+                                        <option value="4">Cuarto Primaria</option>
+                                        <option value="5">Quinto Primaria</option>
+                                        <option value="6">Sexto Primaria</option>
+                                        <option value="7">Primero Secundaria</option>
+                                        <option value="8">Segundo Secundaria</option>
+                                        <option value="9">Tercero Secundaria</option>
                                     </select>
+                                    <div class="invalid-feedback">Por favor selecciona una opción válida.</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="rol" class="form-label">Rol</label>
                                     <select class="form-control" id="rol" required>
                                         <option value="" selected disabled>Selecciona un rol</option>
+                                        <option value="1" selected disabled>Administrador</option>
+                                        <option value="2" selected disabled>Usuario</option>
                                     </select>
+                                    <div class="invalid-feedback">Por favor selecciona un rol válido.</div>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Guardar</button>
                             </form>

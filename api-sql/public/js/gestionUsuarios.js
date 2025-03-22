@@ -23,14 +23,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         try {
             const response = await fetch("http://localhost:3000/api/usuarios");
             if (!response.ok) throw new Error("Error al obtener los usuarios");
-    
+
             const usuarios = await response.json();
             mostrarUsuarios(usuarios);
         } catch (error) {
             console.error("❌ Error al obtener usuarios:", error);
         }
     }
-    
+
 
     function mostrarUsuarios(lista) {
         listaUsuarios.innerHTML = "";
@@ -80,15 +80,51 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     formUsuario.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const datosUsuario = {
-            nombre: document.getElementById("nombre").value,
-            correo: document.getElementById("correo").value,
-            laboratorio: document.getElementById("laboratorio").value || null,
-            nivel: document.getElementById("nivel").value || null,
-            rol: document.getElementById("rol").value || "UsuarioNormal"
-        };
 
-        const url = editandoUsuario ? `http://localhost:3000/api/usuarios/${editandoUsuario}` : "http://localhost:3000/api/usuarios";
+        if (!validarFormulario()) {
+            return; // 🛑 Si hay campos inválidos, no se envía nada
+        }
+
+        const datosUsuario = {
+            nombre: document.getElementById("nombre").value.trim(),
+            correo: document.getElementById("correo").value.trim(),
+            laboratorio: parseInt(document.getElementById("laboratorio").value) || null,
+            nivel: parseInt(document.getElementById("nivel").value) || null,
+            rol: parseInt(document.getElementById("rol").value) || null,
+        };
+        
+
+        function validarFormulario() {
+            let valido = true;
+        
+            const campos = [
+                { id: "nombre", tipo: "input" },
+                { id: "correo", tipo: "input" },
+                { id: "laboratorio", tipo: "select" },
+                { id: "nivel", tipo: "select" },
+                { id: "rol", tipo: "select" }
+            ];
+        
+            campos.forEach(campo => {
+                const el = document.getElementById(campo.id);
+                if (!el.value || el.value === "") {
+                    el.classList.add("is-invalid");
+                    valido = false;
+                } else {
+                    el.classList.remove("is-invalid");
+                }
+            });
+        
+            return valido;
+        }
+        
+
+        console.log("📤 Enviando datos:", datosUsuario);
+
+        const url = editandoUsuario
+            ? `http://localhost:3000/api/usuarios/${editandoUsuario}`
+            : "http://localhost:3000/api/usuarios";
+
         const opciones = {
             method: editandoUsuario ? "PUT" : "POST",
             headers: { "Content-Type": "application/json" },
@@ -99,6 +135,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         modalUsuario.hide();
         cargarUsuarios();
     });
+
+
 
     // Evento para abrir el modal de edición
     listaUsuarios.addEventListener("click", async (e) => {
