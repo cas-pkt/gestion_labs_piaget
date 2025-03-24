@@ -156,7 +156,6 @@
                 </nav>
                 <!-- End Navbar -->
             </div>
-
             <div class="container">
                 <div class="container mt-4">
                     <div class="card shadow-sm">
@@ -166,17 +165,13 @@
                                 <i class="fas fa-plus"></i> Agregar Laboratorio
                             </button>
                         </div>
-
                         <!-- Pestañas de Laboratorios -->
                         <ul class="nav nav-tabs mt-3" id="laboratorioTabs"></ul>
-
                         <div class="tab-content p-3" id="laboratorioContent">
                             <!-- Contenido dinámico -->
                         </div>
-
                     </div>
                 </div>
-
                 <!-- Modal para Agregar Laboratorio -->
                 <div class="modal fade" id="modalLaboratorio" tabindex="-1">
                     <div class="modal-dialog">
@@ -204,7 +199,6 @@
                                             <option value="8">Segundo Secundaria</option>
                                             <option value="9">Tercero Secundaria</option>
                                         </select>
-
                                     </div>
                                     <button type="submit" class="btn btn-primary w-100">Guardar</button>
                                 </form>
@@ -212,7 +206,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Modal para Ver Estado del Equipo -->
                 <div class="modal fade" id="modalEquipo" tabindex="-1">
                     <div class="modal-dialog">
@@ -228,47 +221,67 @@
                     </div>
                 </div>
 
+                <!-- Modal para ver reportes del equipo -->
+                <div class="modal fade" id="modalReportesEquipo" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Reportes del Equipo <span id="modalEquipoTitulo"></span></h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Cerrar"></button>
+                            </div>
+                            <div class="modal-body">
+                                <ul class="list-group" id="listaReportesEquipo">
+                                    <!-- Reportes se insertarán aquí -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
                 <footer class="footer">
                     <div class="container-fluid d-flex justify-content-between">
                         <div>Instituto Piaget</div>
                     </div>
                 </footer>
             </div>
-
         </div>
 
         <!--   Core JS Files   -->
-    <script src="styles/assets/js/core/jquery-3.7.1.min.js"></script>
-    <script src="styles/assets/js/core/popper.min.js"></script>
-    <script src="styles/assets/js/core/bootstrap.min.js"></script>
+        <script src="styles/assets/js/core/jquery-3.7.1.min.js"></script>
+        <script src="styles/assets/js/core/popper.min.js"></script>
+        <script src="styles/assets/js/core/bootstrap.min.js"></script>
 
-    <!-- jQuery Scrollbar -->
-    <script src="styles/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+        <!-- jQuery Scrollbar -->
+        <script src="styles/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
 
-    <!-- Chart JS -->
-    <script src="styles/assets/js/plugin/chart.js/chart.min.js"></script>
+        <!-- Chart JS -->
+        <script src="styles/assets/js/plugin/chart.js/chart.min.js"></script>
 
-    <!-- jQuery Sparkline -->
-    <script src="styles/assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js"></script>
+        <!-- jQuery Sparkline -->
+        <script src="styles/assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js"></script>
 
-    <!-- Chart Circle -->
-    <script src="styles/assets/js/plugin/chart-circle/circles.min.js"></script>
+        <!-- Chart Circle -->
+        <script src="styles/assets/js/plugin/chart-circle/circles.min.js"></script>
 
-    <!-- Datatables -->
-    <script src="styles/assets/js/plugin/datatables/datatables.min.js"></script>
+        <!-- Datatables -->
+        <script src="styles/assets/js/plugin/datatables/datatables.min.js"></script>
 
-    <!-- Bootstrap Notify -->
-    <script src="styles/assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
+        <!-- Bootstrap Notify -->
+        <script src="styles/assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
 
-    <!-- jQuery Vector Maps -->
-    <script src="styles/assets/js/plugin/jsvectormap/jsvectormap.min.js"></script>
-    <script src="styles/assets/js/plugin/jsvectormap/world.js"></script>
+        <!-- jQuery Vector Maps -->
+        <script src="styles/assets/js/plugin/jsvectormap/jsvectormap.min.js"></script>
+        <script src="styles/assets/js/plugin/jsvectormap/world.js"></script>
 
-    <!-- Sweet Alert -->
-    <script src="styles/assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+        <!-- Sweet Alert -->
+        <script src="styles/assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- Kaiadmin JS -->
-    <script src="styles/assets/js/kaiadmin.min.js"></script>
+
+        <!-- Kaiadmin JS -->
+        <script src="styles/assets/js/kaiadmin.min.js"></script>
 
         <!-- Script para jalar los datos del laboratorio -->
         <script src="js/gestionLaboratorios.js"></script>
@@ -282,7 +295,7 @@
                 lineColor: "#177dff",
                 fillColor: "rgba(23, 125, 255, 0.14)",
             });
-    
+
             $("#lineChart2").sparkline([99, 125, 122, 105, 110, 124, 115], {
                 type: "line",
                 height: "70",
@@ -291,7 +304,7 @@
                 lineColor: "#f3545d",
                 fillColor: "rgba(243, 84, 93, .14)",
             });
-    
+
             $("#lineChart3").sparkline([105, 103, 123, 100, 95, 105, 115], {
                 type: "line",
                 height: "70",
@@ -300,67 +313,8 @@
                 lineColor: "#ffa534",
                 fillColor: "rgba(255, 165, 52, .14)",
             });
-        </script>
 
-        <!-- Script de Gestión de Laboratorios -->
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                const listaLaboratorios = document.getElementById("laboratorioTabs");
-                const laboratorioContent = document.getElementById("laboratorioContent");
 
-                async function cargarLaboratorios() {
-                    const response = await fetch("http://localhost:3000/api/laboratorios");
-                    const laboratorios = await response.json();
-
-                    listaLaboratorios.innerHTML = "";
-                    laboratorioContent.innerHTML = "";
-
-                    laboratorios.forEach((lab, index) => {
-                        listaLaboratorios.innerHTML += `
-                            <li class="nav-item">
-                                <a class="nav-link ${index === 0 ? 'active' : ''}" data-bs-toggle="tab" href="#lab-${lab.id_laboratorio}">
-                                    ${lab.nombre_laboratorio}
-                                </a>
-                            </li>`;
-
-                        laboratorioContent.innerHTML += `
-                            <div class="tab-pane fade ${index === 0 ? 'show active' : ''}" id="lab-${lab.id_laboratorio}">
-                                <div class="row p-3" id="equipos-lab-${lab.id_laboratorio}">
-                                </div>
-                            </div>`;
-
-                        cargarEquipos(lab.id_laboratorio);
-                    });
-                }
-
-                async function cargarEquipos(labId) {
-                    const response = await fetch(`http://localhost:3000/api/laboratorios/${labId}/equipos`);
-                    const equipos = await response.json();
-
-                    console.log(`📥 Equipos recibidos para el laboratorio ${labId}:`, equipos);
-
-                    const container = document.getElementById(`equipos-lab-${labId}`);
-                    if (!container) {
-                        console.error(`⚠️ Contenedor no encontrado para el laboratorio ${labId}`);
-                        return;
-                    }
-
-                    container.innerHTML = equipos.map(equipo => `
-                        <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-body text-center">
-                                    <h5>PC-${equipo.id_equipo}</h5>
-                                    <p>Estado: ${equipo.estado || 'Desconocido'}</p>
-                                    <button class="btn btn-info btn-sm" onclick="verEquipo(${equipo.id_equipo})">
-                                        Ver Reportes
-                                    </button>
-                                </div>
-                            </div>
-                        </div>`).join('');
-                }
-
-                cargarLaboratorios();
-            });
         </script>
 
         <script>
@@ -380,7 +334,16 @@
             });
         </script>
 
+        <style>
+            textarea.observaciones-reporte {
+                resize: none;
+                min-width: 180px;
+            }
 
+            button.guardar-reporte {
+                white-space: nowrap;
+            }
+        </style>
 </body>
 
 </html>

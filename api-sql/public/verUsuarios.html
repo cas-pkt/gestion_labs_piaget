@@ -10,6 +10,8 @@
 
     <!-- Fonts and icons -->
     <script src="styles/assets/js/plugin/webfont/webfont.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
     <script>
         WebFont.load({
             google: { families: ["Public Sans:300,400,500,600,700"] },
@@ -201,31 +203,34 @@
                             </button>
                         </div>
                         <div class="card-body">
-                            <div class="row g-3">
+                            <div class="row g-3 mb-3">
                                 <div class="col-md-3">
-                                    <label>Filtrar por Usuario</label>
-                                    <select id="filterUsuario" class="form-control">
+                                    <label for="filtroUsuario" class="form-label">Filtrar por Usuario</label>
+                                    <input type="text" class="form-control" id="filtroUsuario"
+                                        placeholder="Nombre o correo">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="filtroLaboratorio" class="form-label">Filtrar por Laboratorio</label>
+                                    <select class="form-select" id="filtroLaboratorio">
                                         <option value="">Todos</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
-                                    <label>Filtrar por Laboratorio</label>
-                                    <select id="filterLaboratorio" class="form-control">
+                                    <label for="filtroNivel" class="form-label">Filtrar por Nivel</label>
+                                    <select class="form-select" id="filtroNivel">
                                         <option value="">Todos</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
-                                    <label>Filtrar por Nivel</label>
-                                    <select id="filterNivel" class="form-control">
+                                    <label for="filtroRol" class="form-label">Filtrar por Rol</label>
+                                    <select class="form-select" id="filtroRol">
                                         <option value="">Todos</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
-                                    <label>Filtrar por Rol</label>
-                                    <select id="filterRol" class="form-control">
-                                        <option value="">Todos</option>
-                                    </select>
-                                </div>
+                                <button id="btnLimpiarFiltros" class="btn btn-outline-secondary btn-sm mt-2">
+                                    Limpiar Filtros
+                                </button>
+                                
                             </div>
                         </div>
                     </div>
@@ -245,7 +250,8 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="modalUsuarioLabel">Agregar/Editar Usuario</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <form id="formUsuario">
@@ -294,7 +300,7 @@
                     </div>
                 </div>
             </div>
-            
+
 
             <footer class="footer">
                 <div class="container-fluid d-flex justify-content-between">
@@ -338,6 +344,7 @@
 
     <!-- Sweet Alert -->
     <script src="styles/assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Kaiadmin JS -->
     <script src="styles/assets/js/kaiadmin.min.js"></script>
@@ -391,6 +398,7 @@
             window.location.href = "login.html";
         });
     </script>
+
 
 
 </body>

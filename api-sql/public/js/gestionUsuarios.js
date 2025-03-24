@@ -10,6 +10,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.getElementById("userName").textContent = user.nombre;
     document.getElementById("userBoxName").textContent = user.nombre;
     document.getElementById("userEmail").textContent = user.correo;
+    document.getElementById("btnLimpiarFiltros").addEventListener("click", () => {
+        document.getElementById("filtroUsuario").value = "";
+        document.getElementById("filtroLaboratorio").value = "";
+        document.getElementById("filtroNivel").value = "";
+        document.getElementById("filtroRol").value = "";
+        aplicarFiltros();
+    });
+
 
     const listaUsuarios = document.getElementById("listaUsuarios");
     const btnAgregarUsuario = document.getElementById("btnAgregarUsuario");
@@ -17,6 +25,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const formUsuario = document.getElementById("formUsuario");
 
     let usuarios = [];
+    let usuariosOriginales = []; // guardará todos los usuarios
     let editandoUsuario = null;
 
     async function cargarUsuarios() {
@@ -25,12 +34,62 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!response.ok) throw new Error("Error al obtener los usuarios");
 
             const usuarios = await response.json();
-            mostrarUsuarios(usuarios);
+            usuariosOriginales = usuarios;
+            mostrarUsuarios(usuariosOriginales);
         } catch (error) {
             console.error("❌ Error al obtener usuarios:", error);
         }
     }
 
+    function cargarOpcionesFiltros() {
+        const laboratorioSet = new Set();
+        const nivelSet = new Set();
+        const rolSet = new Set();
+    
+        usuariosOriginales.forEach(user => {
+            if (user.laboratorio) laboratorioSet.add(user.laboratorio);
+            if (user.nivel) nivelSet.add(user.nivel);
+            if (user.rol) rolSet.add(user.rol);
+        });
+    
+        popularSelect("filtroLaboratorio", laboratorioSet);
+        popularSelect("filtroNivel", nivelSet);
+        popularSelect("filtroRol", rolSet);
+    }
+    
+    function popularSelect(id, valores) {
+        const select = document.getElementById(id);
+        select.innerHTML = '<option value="">Todos</option>';
+        Array.from(valores).forEach(valor => {
+            const option = document.createElement("option");
+            option.value = valor;
+            option.textContent = valor;
+            select.appendChild(option);
+        });
+    }
+    
+    function aplicarFiltros() {
+        const usuarioInput = document.getElementById("filtroUsuario").value.toLowerCase();
+        const labFiltro = document.getElementById("filtroLaboratorio").value;
+        const nivelFiltro = document.getElementById("filtroNivel").value;
+        const rolFiltro = document.getElementById("filtroRol").value;
+    
+        const filtrados = usuariosOriginales.filter(u => {
+            const coincideUsuario = u.nombre.toLowerCase().includes(usuarioInput) || u.correo.toLowerCase().includes(usuarioInput);
+            const coincideLab = !labFiltro || u.laboratorio === labFiltro;
+            const coincideNivel = !nivelFiltro || u.nivel === nivelFiltro;
+            const coincideRol = !rolFiltro || u.rol === rolFiltro;
+    
+            return coincideUsuario && coincideLab && coincideNivel && coincideRol;
+        });
+    
+        mostrarUsuarios(filtrados);
+    }
+    
+    ["filtroUsuario", "filtroLaboratorio", "filtroNivel", "filtroRol"].forEach(id => {
+        document.getElementById(id).addEventListener("input", aplicarFiltros);
+    });
+    
 
     function mostrarUsuarios(lista) {
         listaUsuarios.innerHTML = "";
@@ -38,15 +97,27 @@ document.addEventListener("DOMContentLoaded", async function () {
             const item = document.createElement("div");
             item.classList.add("list-group-item", "d-flex", "justify-content-between", "align-items-center");
             item.innerHTML = `
-                <div>
-                    <strong>${usuario.nombre}</strong> - ${usuario.correo} <br>
-                    <small>Laboratorio: ${usuario.laboratorio || "Sin asignar"} | Nivel: ${usuario.nivel || "Sin asignar"} | Rol: ${usuario.rol || "Sin rol"}</small>
-                </div>
-                <div>
-                    <button class="btn btn-warning btn-sm btnEditar" data-id="${usuario.id_usuario}">Editar</button>
-                    <button class="btn btn-danger btn-sm btnEliminar" data-id="${usuario.id_usuario}">Eliminar</button>
-                </div>
-            `;
+    <div class="d-flex flex-column flex-md-row justify-content-between w-100 align-items-start align-items-md-center">
+        <div>
+            <h6 class="mb-1 text-primary">${usuario.nombre}</h6>
+            <p class="mb-0"><i class="fas fa-envelope text-muted"></i> ${usuario.correo}</p>
+            <p class="mb-0 text-muted small">
+                <span class="me-2"><i class="fas fa-desktop"></i> ${usuario.laboratorio || "<em>Sin asignar</em>"}</span>
+                <span class="me-2"><i class="fas fa-layer-group"></i> ${usuario.nivel || "<em>Sin asignar</em>"}</span>
+                <span><i class="fas fa-user-tag"></i> ${usuario.rol || "<em>Sin rol</em>"}</span>        
+            </p>
+        </div>
+        <div class="mt-2 mt-md-0">
+            <button class="btn btn-outline-warning btn-sm btnEditar me-2" data-id="${usuario.id_usuario}">
+                <i class="fas fa-edit"></i> Editar
+            </button>
+            <button class="btn btn-outline-danger btn-sm btnEliminar" data-id="${usuario.id_usuario}">
+                <i class="fas fa-trash"></i> Eliminar
+            </button>
+        </div>
+    </div>
+    `;
+
             listaUsuarios.appendChild(item);
         });
     }
@@ -57,32 +128,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         modalUsuario.show();
     });
 
-    listaUsuarios.addEventListener("click", async (e) => {
-        if (e.target.classList.contains("btnEditar")) {
-            const id = e.target.dataset.id;
-            try {
-                const response = await fetch(`http://localhost:3000/api/usuarios/${id}`);
-                const usuario = await response.json();
-
-                document.getElementById("nombre").value = usuario.nombre || "";
-                document.getElementById("correo").value = usuario.correo || "";
-                document.getElementById("laboratorio").value = usuario.laboratorio || "";
-                document.getElementById("nivel").value = usuario.nivel || "";
-                document.getElementById("rol").value = usuario.rol || "";
-
-                editandoUsuario = id;
-                modalUsuario.show();
-            } catch (error) {
-                console.error("❌ Error al cargar usuario:", error);
-            }
-        }
-    });
-
     formUsuario.addEventListener("submit", async (e) => {
         e.preventDefault();
 
         if (!validarFormulario()) {
-            return; // 🛑 Si hay campos inválidos, no se envía nada
+            return;
         }
 
         const datosUsuario = {
@@ -92,32 +142,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             nivel: parseInt(document.getElementById("nivel").value) || null,
             rol: parseInt(document.getElementById("rol").value) || null,
         };
-        
-
-        function validarFormulario() {
-            let valido = true;
-        
-            const campos = [
-                { id: "nombre", tipo: "input" },
-                { id: "correo", tipo: "input" },
-                { id: "laboratorio", tipo: "select" },
-                { id: "nivel", tipo: "select" },
-                { id: "rol", tipo: "select" }
-            ];
-        
-            campos.forEach(campo => {
-                const el = document.getElementById(campo.id);
-                if (!el.value || el.value === "") {
-                    el.classList.add("is-invalid");
-                    valido = false;
-                } else {
-                    el.classList.remove("is-invalid");
-                }
-            });
-        
-            return valido;
-        }
-        
 
         console.log("📤 Enviando datos:", datosUsuario);
 
@@ -131,14 +155,24 @@ document.addEventListener("DOMContentLoaded", async function () {
             body: JSON.stringify(datosUsuario),
         };
 
-        await fetch(url, opciones);
-        modalUsuario.hide();
-        cargarUsuarios();
+        await fetch(url, opciones)
+            .then(async response => {
+                const resJson = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(resJson.message || "Error desconocido");
+                }
+
+                Swal.fire("✅ Éxito", resJson.message, "success");
+                modalUsuario.hide();
+                cargarUsuarios();
+            })
+            .catch(error => {
+                console.error("❌ Error al guardar usuario:", error);
+                Swal.fire("❌ Error", error.message, "error");
+            });
     });
 
-
-
-    // Evento para abrir el modal de edición
     listaUsuarios.addEventListener("click", async (e) => {
         if (e.target.classList.contains("btnEditar")) {
             const id = e.target.dataset.id;
@@ -153,10 +187,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 document.getElementById("nombre").value = usuario.nombre || "";
                 document.getElementById("correo").value = usuario.correo || "";
-                document.getElementById("laboratorio").value = usuario.laboratorio || "";
-                document.getElementById("nivel").value = usuario.nivel || "";
 
-                await cargarRoles(usuario.rol);  // 🔥 Cargar roles al abrir el modal
+                await cargarLaboratorios(usuario.laboratorio);
+                await cargarNiveles(usuario.nivel);
+                await cargarRoles(usuario.rol);
 
                 editandoUsuario = id;
                 modalUsuario.show();
@@ -166,53 +200,134 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    // Función para cargar roles en el select
+    // Evento para eliminar usuario con SweetAlert2
+    listaUsuarios.addEventListener("click", async (e) => {
+        if (e.target.classList.contains("btnEliminar")) {
+            const id = e.target.dataset.id;
+
+            const confirmacion = await Swal.fire({
+                title: "¿Estás seguro?",
+                text: "Esta acción eliminará al usuario permanentemente.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Sí, eliminar",
+                cancelButtonText: "Cancelar"
+            });
+
+            if (confirmacion.isConfirmed) {
+                try {
+                    const response = await fetch(`http://localhost:3000/api/usuarios/${id}`, {
+                        method: "DELETE"
+                    });
+
+                    const resultado = await response.json();
+
+                    if (!response.ok) {
+                        Swal.fire("Error", resultado.message, "error");
+                        return;
+                    }
+
+                    Swal.fire("Eliminado", resultado.message, "success");
+                    cargarUsuarios();
+                } catch (error) {
+                    console.error("❌ Error al eliminar usuario:", error);
+                    Swal.fire("Error", "Hubo un problema al eliminar el usuario", "error");
+                }
+            }
+        }
+    });
+
+
+
     async function cargarRoles(rolSeleccionado = "") {
         try {
             const response = await fetch("http://localhost:3000/api/roles");
             const roles = await response.json();
 
-            console.log("📥 Roles recibidos:", roles);  // 🔍 Verificar datos en la consola
+            const selectRol = document.getElementById("rol");
+            selectRol.innerHTML = `<option value="" disabled>Selecciona un rol</option>`;
 
-            if (response.ok) {
-                const selectRol = document.getElementById("rol");
-                selectRol.innerHTML = `<option value="" disabled>Selecciona un rol</option>`;
-
-                roles.forEach(r => {
-                    const option = document.createElement("option");
-                    option.value = r.id_rol;
-                    option.textContent = r.nombre_rol;
-                    if (r.id_rol == rolSeleccionado) {
-                        option.selected = true;
-                    }
-                    selectRol.appendChild(option);
-                });
-            } else {
-                console.error("❌ Error al obtener roles:", roles.message);
-            }
+            roles.forEach(r => {
+                const option = document.createElement("option");
+                option.value = r.id_rol;
+                option.textContent = r.nombre_rol;
+                if (r.nombre_rol === rolSeleccionado) {
+                    option.selected = true;
+                }
+                selectRol.appendChild(option);
+            });
         } catch (error) {
-            console.error("❌ Error en la solicitud de roles:", error);
+            console.error("❌ Error al cargar roles:", error);
         }
     }
 
-
-    async function cargarLaboratorios() {
+    async function cargarLaboratorios(seleccionado = "") {
         try {
             const response = await fetch("http://localhost:3000/api/laboratorios");
             const laboratorios = await response.json();
-            const selectLaboratorio = document.getElementById("laboratorio");
-            selectLaboratorio.innerHTML = "<option value='' disabled>Selecciona un laboratorio</option>";
+            const select = document.getElementById("laboratorio");
+            select.innerHTML = `<option value="" disabled>Selecciona un laboratorio</option>`;
+
             laboratorios.forEach(lab => {
                 const option = document.createElement("option");
-                option.value = lab.nombre_laboratorio;
+                option.value = lab.id_laboratorio;
                 option.textContent = lab.nombre_laboratorio;
-                selectLaboratorio.appendChild(option);
+                if (lab.nombre_laboratorio === seleccionado) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
             });
         } catch (error) {
-            console.error("❌ Error al obtener laboratorios:", error);
+            console.error("❌ Error al cargar laboratorios:", error);
         }
     }
 
-    cargarUsuarios();
+    async function cargarNiveles(seleccionado = "") {
+        const niveles = [
+            { id: 1, nombre: "PrimeroPrimaria" },
+            { id: 2, nombre: "SegundoPrimaria" },
+            { id: 3, nombre: "TerceroPrimaria" },
+            { id: 4, nombre: "CuartoPrimaria" },
+            { id: 5, nombre: "QuintoPrimaria" },
+            { id: 6, nombre: "SextoPrimaria" },
+        ];
+        const select = document.getElementById("nivel");
+        select.innerHTML = `<option value="" disabled>Selecciona un nivel</option>`;
+
+        niveles.forEach(nivel => {
+            const option = document.createElement("option");
+            option.value = nivel.id;
+            option.textContent = nivel.nombre;
+            if (nivel.nombre === seleccionado) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+    }
+
+    function validarFormulario() {
+        let valido = true;
+        const campos = [
+            { id: "nombre", tipo: "input" },
+            { id: "correo", tipo: "input" },
+            { id: "laboratorio", tipo: "select" },
+            { id: "nivel", tipo: "select" },
+            { id: "rol", tipo: "select" }
+        ];
+        campos.forEach(campo => {
+            const el = document.getElementById(campo.id);
+            if (!el.value || el.value === "") {
+                el.classList.add("is-invalid");
+                valido = false;
+            } else {
+                el.classList.remove("is-invalid");
+            }
+        });
+        return valido;
+    }
+
+    cargarUsuarios().then(cargarOpcionesFiltros);
     cargarLaboratorios();
+    cargarRoles();
+    cargarNiveles();
 });

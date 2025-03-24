@@ -227,10 +227,32 @@ app.get("/reportes/:id_usuario", async (req, res) => {
     }
 });
 
+app.get("/api/reportesPorEquipo/:id_equipo", async (req, res) => {
+    const { id_equipo } = req.params;
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input("id_equipo", sql.Int, id_equipo)
+            .query(`
+                SELECT descripcion, fecha_hora, estatus, observaciones
+                FROM Reportes 
+                WHERE id_equipo = @id_equipo
+                ORDER BY fecha_hora DESC
+            `);
+
+        res.json(result.recordset);
+    } catch (err) {
+        console.error("❌ Error al obtener reportes del equipo:", err);
+        res.status(500).json({ message: "Error al obtener reportes del equipo", error: err.message });
+    }
+});
+
+
 //Main page del Admin
 app.get("/gestionReportes.html", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "gestionReportes.html"));
 });
+
 
 // Obtener TODOS los reportes para el Administrador
 app.get("/api/reportes", async (req, res) => {
@@ -255,27 +277,52 @@ app.get("/api/reportes", async (req, res) => {
 // Actualizar el estado de un reporte
 app.put("/api/reportes/:id", async (req, res) => {
     const { id } = req.params;
-    const { estatus } = req.body;
+    const { estatus, observaciones } = req.body;
 
     try {
         let pool = await sql.connect(dbConfig);
         await pool.request()
             .input("id", sql.Int, id)
             .input("estatus", sql.NVarChar, estatus)
-            .query("UPDATE Reportes SET estatus = @estatus WHERE id_reporte = @id");
+            .input("observaciones", sql.NVarChar, observaciones || null)
+            .query("UPDATE Reportes SET estatus = @estatus, observaciones = @observaciones WHERE id_reporte = @id");
 
-        res.json({ message: `✅ Reporte ${id} actualizado a '${estatus}'` });
+        res.json({ message: "✅ Reporte actualizado correctamente" });
     } catch (error) {
-        res.status(500).json({ message: "Error al actualizar el estado", error: error.message });
+        res.status(500).json({ message: "❌ Error al actualizar reporte", error: error.message });
     }
 });
+
+// 👉 Agregar o actualizar la observación de un reporte
+app.put("/api/reportes/:id/observaciones", async (req, res) => {
+    const { id } = req.params;
+    const { observaciones } = req.body;
+
+    if (!observaciones || observaciones.trim() === "") {
+        return res.status(400).json({ message: "La observación no puede estar vacía." });
+    }
+
+    try {
+        let pool = await sql.connect(dbConfig);
+        await pool.request()
+            .input("id", sql.Int, id)
+            .input("observaciones", sql.NVarChar, observacioneses)
+            .query("UPDATE Reportes SET observacioneses = @observacioneses WHERE id_reporte = @id");
+
+        res.json({ message: "✅ Observación guardada correctamente." });
+    } catch (error) {
+        console.error("❌ Error al guardar observación:", error);
+        res.status(500).json({ message: "Error al guardar observación", error: error.message });
+    }
+});
+
 
 // Historial de reportes
 app.get("/api/historialReportes", async (req, res) => {
     try {
         let pool = await sql.connect(dbConfig);
         let result = await pool.request().query(`
-            SELECT r.id_reporte, e.numero_equipo, l.nombre_laboratorio, r.descripcion, r.fecha_hora, r.estatus
+            SELECT r.id_reporte, e.numero_equipo, l.nombre_laboratorio, r.descripcion, r.fecha_hora, r.estatus, r.observaciones
             FROM Reportes r
             INNER JOIN Equipos e ON r.id_equipo = e.id_equipo
             INNER JOIN Laboratorios l ON r.id_laboratorio = l.id_laboratorio
@@ -289,16 +336,33 @@ app.get("/api/historialReportes", async (req, res) => {
     }
 });
 
+
 // Obtener usuarios
 app.get("/api/usuarios", async (req, res) => {
     try {
         let pool = await sql.connect(dbConfig);
-        let result = await pool.request().query("SELECT id_usuario, nombre, correo FROM Usuarios");
+        let result = await pool.request().query(`
+            SELECT 
+                u.id_usuario, 
+                u.nombre, 
+                u.correo,
+                l.nombre_laboratorio AS laboratorio,
+                n.nombre_nivel AS nivel,
+                r.nombre_rol AS rol
+            FROM Usuarios u
+            LEFT JOIN Laboratorios l ON u.id_laboratorio = l.id_laboratorio
+            LEFT JOIN Niveles n ON u.id_nivel = n.id_nivel
+            LEFT JOIN UsuarioRoles ur ON u.id_usuario = ur.id_usuario
+            LEFT JOIN Roles r ON ur.id_rol = r.id_rol
+        `);
+
         res.json(result.recordset);
     } catch (err) {
         res.status(500).json({ message: "Error al obtener los usuarios", error: err.message });
     }
 });
+
+
 
 
 app.get("/api/usuarios/:id", async (req, res) => {
@@ -309,9 +373,9 @@ app.get("/api/usuarios/:id", async (req, res) => {
             .input("id", sql.Int, id)
             .query(`
                 SELECT u.id_usuario, u.nombre, u.correo, 
-                       l.nombre_laboratorio AS laboratorio, 
-                       n.nombre_nivel AS nivel,   -- ⚠️ Aquí cambiamos 'nivel' por 'nombre_nivel'
-                       r.nombre_rol AS rol
+                    l.nombre_laboratorio AS laboratorio, 
+                    n.nombre_nivel AS nivel,   -- ⚠️ Aquí cambiamos 'nivel' por 'nombre_nivel'
+                    r.nombre_rol AS rol
                 FROM Usuarios u
                 LEFT JOIN Laboratorios l ON u.id_laboratorio = l.id_laboratorio
                 LEFT JOIN Niveles n ON u.id_nivel = n.id_nivel  -- ⚠️ Esto obtiene 'nombre_nivel'
@@ -331,38 +395,66 @@ app.get("/api/usuarios/:id", async (req, res) => {
     }
 });
 
-
-
 //Agregar un usuario
 app.post("/api/usuarios", async (req, res) => {
     try {
-        console.log("📩 Recibiendo datos:", req.body); // 👀 Verificar los datos
-
+        console.log("📩 Recibiendo datos:", req.body);
         const { nombre, correo, laboratorio, nivel, rol } = req.body;
 
-        // 🛑 Validaciones
         if (!nombre || !correo || !laboratorio || !nivel || !rol) {
             return res.status(400).json({ message: "Todos los campos son obligatorios" });
         }
 
+        // Validar datos
         if (isNaN(nivel) || nivel < 1 || nivel > 9) {
             return res.status(400).json({ message: "El nivel debe estar entre 1 y 9" });
         }
 
-        if (!["Usuario", "Administrador"].includes(rol)) {
-            return res.status(400).json({ message: "El rol debe ser 'Usuario' o 'Administrador'" });
+        if (isNaN(rol) || ![1, 2].includes(parseInt(rol))) {
+            return res.status(400).json({ message: "El rol debe ser 1 (Usuario) o 2 (Administrador)" });
         }
 
-        let pool = await sql.connect(dbConfig);
-        await pool.request()
+        const pool = await sql.connect(dbConfig);
+
+        // Verificar si el correo ya existe
+        const checkCorreo = await pool.request()
+            .input("correo", sql.NVarChar, correo)
+            .query("SELECT * FROM Usuarios WHERE correo = @correo");
+
+        if (checkCorreo.recordset.length > 0) {
+            return res.status(400).json({ message: "❌ Este correo ya está registrado" });
+        }
+
+        // 🔐 Generar contraseña temporal y hashearla
+        const passwordTemporal = "Temp1234";
+        const passwordHash = await bcrypt.hash(passwordTemporal, 10);
+
+        // 📝 Insertar usuario
+        const result = await pool.request()
             .input("nombre", sql.NVarChar, nombre)
             .input("correo", sql.NVarChar, correo)
-            .input("laboratorio", sql.NVarChar, laboratorio)
-            .input("nivel", sql.Int, nivel)
-            .input("rol", sql.NVarChar, rol)
-            .query("INSERT INTO Usuarios (nombre, correo, laboratorio, nivel, rol) VALUES (@nombre, @correo, @laboratorio, @nivel, @rol)");
+            .input("password_hash", sql.NVarChar, passwordHash)
+            .input("id_laboratorio", sql.Int, laboratorio)
+            .input("id_nivel", sql.Int, nivel)
+            .query(`
+                INSERT INTO Usuarios (nombre, correo, password_hash, id_laboratorio, id_nivel)
+                OUTPUT INSERTED.id_usuario
+                VALUES (@nombre, @correo, @password_hash, @id_laboratorio, @id_nivel)
+            `);
 
-        res.status(201).json({ message: "Usuario agregado correctamente" });
+        const id_usuario = result.recordset[0].id_usuario;
+
+        // Rol
+        await pool.request()
+            .input("id_usuario", sql.Int, id_usuario)
+            .input("id_rol", sql.Int, rol)
+            .query("INSERT INTO UsuarioRoles (id_usuario, id_rol) VALUES (@id_usuario, @id_rol)");
+
+        res.status(201).json({
+            message: "✅ Usuario creado exitosamente",
+            password_temporal: passwordTemporal
+        });
+
     } catch (err) {
         console.error("❌ Error al agregar usuario:", err.message);
         res.status(500).json({ message: "Error interno del servidor", error: err.message });
@@ -371,59 +463,35 @@ app.post("/api/usuarios", async (req, res) => {
 
 
 // Actualizar un usuario
-app.post("/api/usuarios", async (req, res) => {
-    try {
-        const { nombre, correo, laboratorio, nivel } = req.body;
-
-        if (!nombre || !correo || !laboratorio || !nivel) {
-            return res.status(400).json({ message: "Todos los campos son obligatorios" });
-        }
-
-        let pool = await sql.connect(dbConfig);
-        let result = await pool.request()
-            .input("nombre", sql.NVarChar, nombre)
-            .input("correo", sql.NVarChar, correo)
-            .input("laboratorio", sql.NVarChar, laboratorio)
-            .input("nivel", sql.NVarChar, nivel)
-            .query("INSERT INTO Usuarios (nombre, correo, laboratorio, nivel) VALUES (@nombre, @correo, @laboratorio, @nivel)");
-
-        res.status(201).json({ message: "Usuario agregado correctamente" });
-    } catch (err) {
-        res.status(500).json({ message: "Error al agregar el usuario", error: err.message });
-    }
-});
-
-// Actualizar un usuario
 app.put("/api/usuarios/:id", async (req, res) => {
     try {
         const { id } = req.params;
         let { nombre, correo, laboratorio, nivel, rol } = req.body;
 
-        // 🔥 Asegurar que los valores sean enteros
         laboratorio = laboratorio ? parseInt(laboratorio) : null;
         nivel = nivel ? parseInt(nivel) : null;
         rol = rol ? parseInt(rol) : null;
 
-        // 🛑 Validaciones
-        if (laboratorio !== null && isNaN(laboratorio)) {
-            return res.status(400).json({ message: "El laboratorio debe ser un número válido" });
+        if (!nombre || !correo || !laboratorio || !nivel || !rol) {
+            return res.status(400).json({ message: "Todos los campos son obligatorios" });
         }
-        if (nivel !== null && isNaN(nivel)) {
-            return res.status(400).json({ message: "El nivel debe ser un número válido" });
+
+        if (isNaN(nivel) || nivel < 1 || nivel > 9) {
+            return res.status(400).json({ message: "El nivel debe estar entre 1 y 9" });
         }
-        if (rol !== null && isNaN(rol)) {
-            return res.status(400).json({ message: "El rol debe ser un número válido" });
+
+        if (isNaN(rol) || ![1, 2].includes(rol)) {
+            return res.status(400).json({ message: "El rol debe ser 1 (Usuario) o 2 (Administrador)" });
         }
 
         let pool = await sql.connect(dbConfig);
 
-        // 🔹 1️⃣ Actualizar los datos en la tabla Usuarios
         let result = await pool.request()
             .input("id", sql.Int, id)
             .input("nombre", sql.NVarChar, nombre)
             .input("correo", sql.NVarChar, correo)
-            .input("id_laboratorio", laboratorio !== null ? sql.Int : sql.NVarChar, laboratorio)
-            .input("id_nivel", nivel !== null ? sql.Int : sql.NVarChar, nivel)
+            .input("id_laboratorio", sql.Int, laboratorio)
+            .input("id_nivel", sql.Int, nivel)
             .query(`
                 UPDATE Usuarios 
                 SET nombre = @nombre, correo = @correo, id_laboratorio = @id_laboratorio, id_nivel = @id_nivel
@@ -434,19 +502,16 @@ app.put("/api/usuarios/:id", async (req, res) => {
             return res.status(404).json({ message: "Usuario no encontrado." });
         }
 
-        // 🔹 2️⃣ Verificar si el usuario ya tiene un rol asignado en UsuarioRoles
         let checkRole = await pool.request()
             .input("id_usuario", sql.Int, id)
             .query("SELECT id_rol FROM UsuarioRoles WHERE id_usuario = @id_usuario");
 
         if (checkRole.recordset.length > 0) {
-            // Si ya tiene un rol, actualizamos el existente
             await pool.request()
                 .input("id_usuario", sql.Int, id)
                 .input("id_rol", sql.Int, rol)
                 .query("UPDATE UsuarioRoles SET id_rol = @id_rol WHERE id_usuario = @id_usuario");
         } else {
-            // Si no tiene un rol, lo insertamos
             await pool.request()
                 .input("id_usuario", sql.Int, id)
                 .input("id_rol", sql.Int, rol)
@@ -456,10 +521,10 @@ app.put("/api/usuarios/:id", async (req, res) => {
         res.json({ message: "✅ Usuario actualizado correctamente" });
 
     } catch (err) {
+        console.error("❌ Error al actualizar usuario:", err.message);
         res.status(500).json({ message: "❌ Error al actualizar el usuario", error: err.message });
     }
 });
-
 
 // Eliminar un usuario
 app.delete("/api/usuarios/:id", async (req, res) => {
@@ -467,6 +532,13 @@ app.delete("/api/usuarios/:id", async (req, res) => {
         const { id } = req.params;
 
         let pool = await sql.connect(dbConfig);
+
+        // Primero eliminamos el rol del usuario en UsuarioRoles
+        await pool.request()
+            .input("id_usuario", sql.Int, id)
+            .query("DELETE FROM UsuarioRoles WHERE id_usuario = @id_usuario");
+
+        // Luego eliminamos al usuario en Usuarios
         let result = await pool.request()
             .input("id", sql.Int, id)
             .query("DELETE FROM Usuarios WHERE id_usuario = @id");
@@ -475,9 +547,9 @@ app.delete("/api/usuarios/:id", async (req, res) => {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        res.json({ message: "Usuario eliminado correctamente" });
+        res.json({ message: "✅ Usuario eliminado correctamente" });
     } catch (err) {
-        res.status(500).json({ message: "Error al eliminar el usuario", error: err.message });
+        res.status(500).json({ message: "❌ Error al eliminar el usuario", error: err.message });
     }
 });
 
@@ -547,9 +619,25 @@ app.get("/api/laboratorios/:id/equipos", async (req, res) => {
 });
 
 
+app.get("/api/reportesPorEquipo/:id_equipo", async (req, res) => {
+    const { id_equipo } = req.params;
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input("id_equipo", sql.Int, id_equipo)
+            .query(`
+                SELECT id_reporte, descripcion, fecha_hora, estatus, observaciones
+                FROM Reportes 
+                WHERE id_equipo = @id_equipo
+                ORDER BY fecha_hora DESC
+            `); // ← ¡Ahora sí incluye `id_reporte` y `observaciones`!
 
-
-
+        res.json(result.recordset);
+    } catch (err) {
+        console.error("❌ Error al obtener reportes del equipo:", err);
+        res.status(500).json({ message: "Error al obtener reportes del equipo", error: err.message });
+    }
+});
 
 app.post("/api/laboratorios", async (req, res) => {
     try {
