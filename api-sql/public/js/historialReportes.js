@@ -1,86 +1,128 @@
-document.addEventListener("DOMContentLoaded", async function () {
-    const user = JSON.parse(localStorage.getItem("user"));
+document.addEventListener("DOMContentLoaded", function () {
+    const contenedor = document.getElementById("historialReportes");
+    const filtros = {
+        fecha: document.getElementById("filterFecha"),
+        usuario: document.getElementById("filterUsuario"),
+        laboratorio: document.getElementById("filterLaboratorio"),
+        nivel: document.getElementById("filterNivel")
+    };
 
-    if (!user) {
-        window.location.href = "login.html";
-        return;
-    }
+    let todosReportes = [];
 
-    // Llenar campos del usuario
-    document.getElementById("userName").textContent = user.nombre;
-    document.getElementById("userBoxName").textContent = user.nombre;
-    document.getElementById("userEmail").textContent = user.correo;
-
-    const filterFecha = document.getElementById("filterFecha");
-    const filterUsuario = document.getElementById("filterUsuario");
-    const filterLaboratorio = document.getElementById("filterLaboratorio");
-    const filterNivel = document.getElementById("filterNivel");
-    const historialContainer = document.getElementById("historialReportes");
-
-    async function cargarHistorialReportes() {
+    async function obtenerHistorial() {
         try {
-            const response = await fetch(`http://localhost:3000/api/historialReportes`);
-            const reportes = await response.json();
-
-            if (!response.ok) {
-                console.error("❌ Error al obtener reportes históricos:", reportes.message);
-                return;
-            }
-
-            // Vaciar contenedor antes de cargar
-            historialContainer.innerHTML = "";
-
-            reportes.forEach((reporte) => {
-                const item = document.createElement("div");
-                item.classList.add("list-group-item");
-
-                item.innerHTML = `
-                    <div class="historial-header">
-                        <strong>Reporte #${reporte.id_reporte}</strong> - ${reporte.descripcion}
-                    </div>
-                    <div class="historial-meta">
-                        <span>📌 Equipo: ${reporte.numero_equipo}</span> | 
-                        <span>🏛 Laboratorio: ${reporte.nombre_laboratorio}</span> | 
-                        <span>📅 Fecha: ${new Date(reporte.fecha_hora).toLocaleString()}</span> |
-                        <span class="status ${reporte.estatus.toLowerCase()}">${reporte.estatus}</span>
-                    </div>
-                `;
-
-                historialContainer.appendChild(item);
-            });
+            const response = await fetch("http://localhost:3000/api/historialReportes");
+            todosReportes = await response.json();
+            renderizarHistorial(todosReportes);
+            cargarFiltros(todosReportes);
         } catch (error) {
-            console.error("❌ Error en la solicitud de historial de reportes:", error);
+            console.error("❌ Error al cargar historial:", error);
         }
     }
 
-    cargarHistorialReportes();
+    function renderizarHistorial(reportes) {
+        contenedor.innerHTML = "";
 
-    // Filtrar reportes
-    function aplicarFiltros() {
-        const fecha = filterFecha.value;
-        const usuario = filterUsuario.value;
-        const laboratorio = filterLaboratorio.value;
-        const nivel = filterNivel.value;
+        if (!reportes.length) {
+            contenedor.innerHTML = `<div class="text-muted text-center">No hay reportes registrados.</div>`;
+            return;
+        }
 
-        const items = historialContainer.querySelectorAll(".list-group-item");
+        let tabla = `
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-bordered align-middle text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Equipo</th>
+                            <th>Laboratorio</th>
+                            <th>Usuario</th>
+                            <th>Nivel</th>
+                            <th>Descripción</th>
+                            <th>Observaciones</th>
+                            <th>Estatus</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
 
-        items.forEach((item) => {
-            const fechaItem = item.querySelector(".historial-meta span:nth-child(3)").textContent.includes(fecha);
-            const usuarioItem = usuario === "" || item.innerHTML.includes(`Usuario: ${usuario}`);
-            const laboratorioItem = laboratorio === "" || item.innerHTML.includes(`Laboratorio: ${laboratorio}`);
-            const nivelItem = nivel === "" || item.innerHTML.includes(`Nivel: ${nivel}`);
+        reportes.forEach(reporte => {
+            const fecha = new Date(reporte.fecha_hora);
+            const fechaStr = fecha.toLocaleDateString() + " " + fecha.toLocaleTimeString();
+            const badgeColor = reporte.estatus === "Pendiente"
+                ? "secondary"
+                : reporte.estatus === "En proceso"
+                    ? "warning text-dark"
+                    : "success";
 
-            if (fechaItem && usuarioItem && laboratorioItem && nivelItem) {
-                item.style.display = "";
-            } else {
-                item.style.display = "none";
-            }
+            tabla += `
+                <tr>
+                    <td>${fechaStr}</td>
+                    <td>${reporte.numero_equipo}</td>
+                    <td>${reporte.nombre_laboratorio}</td>
+                    <td>${reporte.nombre_usuario || 'Desconocido'}</td>
+                    <td>${reporte.nivel_usuario || 'No asignado'}</td>
+                    <td>${reporte.descripcion}</td>
+                    <td>${reporte.observaciones || '<em>Sin observaciones</em>'}</td>
+                    <td><span class="badge bg-${badgeColor}">${reporte.estatus}</span></td>
+                </tr>
+            `;
         });
+
+        tabla += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        contenedor.innerHTML = tabla;
     }
 
-    // Eventos para aplicar filtros
-    filterFecha.addEventListener("change", aplicarFiltros);
-    filterUsuario.addEventListener("change", aplicarFiltros);
-    filterLaboratorio.addEventListener("change", aplicarFiltros);
-    filterNivel.addEventListener("change", aplicarFiltros);
+
+    function cargarFiltros(reportes) {
+        const usuarios = new Set();
+        const laboratorios = new Set();
+        const niveles = new Set();
+
+        reportes.forEach(rep => {
+            if (rep.nombre_usuario && rep.nombre_usuario !== 'Desconocido') usuarios.add(rep.nombre_usuario);
+            if (rep.nombre_laboratorio) laboratorios.add(rep.nombre_laboratorio);
+            if (rep.nivel_usuario && rep.nivel_usuario !== 'No asignado') niveles.add(rep.nivel_usuario);
+        });
+
+        // Limpiar selectores antes de agregar
+        filtros.usuario.innerHTML = `<option value="">Todos</option>`;
+        filtros.laboratorio.innerHTML = `<option value="">Todos</option>`;
+        filtros.nivel.innerHTML = `<option value="">Todos</option>`;
+
+        filtros.usuario.innerHTML += Array.from(usuarios).map(u => `<option value="${u}">${u}</option>`).join("");
+        filtros.laboratorio.innerHTML += Array.from(laboratorios).map(l => `<option value="${l}">${l}</option>`).join("");
+        filtros.nivel.innerHTML += Array.from(niveles).map(n => `<option value="${n}">${n}</option>`).join("");
+    }
+
+
+    function aplicarFiltros() {
+        const fecha = filtros.fecha.value;
+        const usuario = filtros.usuario.value;
+        const laboratorio = filtros.laboratorio.value;
+        const nivel = filtros.nivel.value;
+
+        const filtrados = todosReportes.filter(rep => {
+            const fechaReporte = new Date(rep.fecha_hora).toISOString().slice(0, 10); // YYYY-MM-DD
+            const coincideFecha = !fecha || fecha === fechaReporte;
+            const coincideUsuario = !usuario || rep.nombre_usuario === usuario;
+            const coincideLab = !laboratorio || rep.nombre_laboratorio === laboratorio;
+            const coincideNivel = !nivel || rep.nivel_usuario === nivel;
+            return coincideFecha && coincideUsuario && coincideLab && coincideNivel;
+        });
+
+        renderizarHistorial(filtrados);
+    }
+
+
+    Object.values(filtros).forEach(input => {
+        input.addEventListener("change", aplicarFiltros);
+    });
+
+    obtenerHistorial();
 });

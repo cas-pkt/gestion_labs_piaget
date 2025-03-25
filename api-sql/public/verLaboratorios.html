@@ -159,53 +159,70 @@
             <div class="container">
                 <div class="container mt-4">
                     <div class="card shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h4 class="mb-0">Gestión de Laboratorios</h4>
-                            <button class="btn btn-primary" id="btnAgregarLaboratorio">
-                                <i class="fas fa-plus"></i> Agregar Laboratorio
-                            </button>
+                        <div class="card-header d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                            <h3 class="mb-0">Gestión de Laboratorios</h3>
+                            <div class="d-flex gap-2">
+                                <button id="btnAgregarLaboratorio" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Agregar Laboratorio
+                                </button>
+                                <button id="btnAgregarEquipo" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Agregar Equipo
+                                </button>
+                            </div>
                         </div>
+
                         <!-- Pestañas de Laboratorios -->
-                        <ul class="nav nav-tabs mt-3" id="laboratorioTabs"></ul>
-                        <div class="tab-content p-3" id="laboratorioContent">
-                            <!-- Contenido dinámico -->
+                        <ul class="nav nav-tabs mb-3" id="nivelTabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="tab-primaria" data-bs-toggle="tab"
+                                    href="#contenido-primaria">Primaria</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="tab-secundaria" data-bs-toggle="tab"
+                                    href="#contenido-secundaria">Secundaria</a>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="contenido-primaria">
+                                <ul class="nav nav-tabs" id="laboratorioTabsPrimaria"></ul>
+                                <div class="tab-content" id="laboratorioContentPrimaria"></div>
+                            </div>
+                            <div class="tab-pane fade" id="contenido-secundaria">
+                                <ul class="nav nav-tabs" id="laboratorioTabsSecundaria"></ul>
+                                <div class="tab-content" id="laboratorioContentSecundaria"></div>
+                            </div>
                         </div>
+
                     </div>
                 </div>
                 <!-- Modal para Agregar Laboratorio -->
-                <div class="modal fade" id="modalLaboratorio" tabindex="-1">
+                <!-- Modal -->
+                <div class="modal fade" id="modalAgregarLaboratorio" tabindex="-1">
                     <div class="modal-dialog">
-                        <div class="modal-content">
+                        <form class="modal-content" id="formAgregarLaboratorio">
                             <div class="modal-header">
                                 <h5 class="modal-title">Agregar Laboratorio</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
-                                <form id="formLaboratorio">
-                                    <div class="mb-3">
-                                        <label for="nombreLaboratorio" class="form-label">Nombre</label>
-                                        <input type="text" class="form-control" id="nombreLaboratorio" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="nivelLaboratorio" class="form-label">Nivel</label>
-                                        <select id="nivelLaboratorio" class="form-control">
-                                            <option value="1">Primero Primaria</option>
-                                            <option value="2">Segundo Primaria</option>
-                                            <option value="3">Tercero Primaria</option>
-                                            <option value="4">Cuarto Primaria</option>
-                                            <option value="5">Quinto Primaria</option>
-                                            <option value="6">Sexto Primaria</option>
-                                            <option value="7">Primero Secundaria</option>
-                                            <option value="8">Segundo Secundaria</option>
-                                            <option value="9">Tercero Secundaria</option>
-                                        </select>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary w-100">Guardar</button>
-                                </form>
+                                <label for="nombreLaboratorio">Nombre:</label>
+                                <input type="text" class="form-control" id="nombreLaboratorio" required>
+
+                                <label for="nivelLaboratorio" class="mt-2">Nivel:</label>
+                                <select class="form-control" id="nivelLaboratorio" required>
+                                    <option value="">Seleccione</option>
+                                    <option value="1">Primaria</option>
+                                    <option value="2">Secundaria</option>
+                                </select>
                             </div>
-                        </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Guardar</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
+
                 <!-- Modal para Ver Estado del Equipo -->
                 <div class="modal fade" id="modalEquipo" tabindex="-1">
                     <div class="modal-dialog">
@@ -238,14 +255,62 @@
                         </div>
                     </div>
                 </div>
-
-
-                <footer class="footer">
-                    <div class="container-fluid d-flex justify-content-between">
-                        <div>Instituto Piaget</div>
-                    </div>
-                </footer>
             </div>
+
+            <!-- Modal Agregar Equipo -->
+            <div class="modal fade" id="modalAgregarEquipo" tabindex="-1">
+                <div class="modal-dialog">
+                    <form id="formAgregarEquipo" class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Agregar Equipo</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="numeroEquipo" class="form-label">Número del Equipo</label>
+                                <input type="text" class="form-control" id="numeroEquipo" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="laboratorioEquipo" class="form-label">Laboratorio</label>
+                                <select id="laboratorioEquipo" class="form-select" required></select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-success">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal Editar Equipo -->
+            <div class="modal fade" id="modalEditarEquipo" tabindex="-1">
+                <div class="modal-dialog">
+                    <form class="modal-content" id="formEditarEquipo">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Editar Nombre del Equipo</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="editarIdEquipo">
+                            <div class="mb-3">
+                                <label for="editarNumeroEquipo" class="form-label">Nuevo nombre:</label>
+                                <input type="text" id="editarNumeroEquipo" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-success">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+
+            <footer class="footer">
+                <div class="container-fluid d-flex justify-content-between">
+                    <div>Instituto Piaget</div>
+                </div>
+            </footer>
         </div>
 
         <!--   Core JS Files   -->
@@ -342,6 +407,24 @@
 
             button.guardar-reporte {
                 white-space: nowrap;
+            }
+
+            textarea.observaciones-reporte {
+                resize: vertical;
+                min-height: 60px;
+            }
+
+            .guardar-reporte {
+                white-space: nowrap;
+            }
+
+            .list-group-item {
+                transition: box-shadow 0.2s ease;
+                background-color: #f8f9fa;
+            }
+
+            .list-group-item:hover {
+                box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15);
             }
         </style>
 </body>

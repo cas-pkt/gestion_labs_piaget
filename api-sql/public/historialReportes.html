@@ -225,7 +225,7 @@
                         </div>
                     </div>
                 </div>
-
+            </div>
             <footer class="footer">
                 <div class="container-fluid d-flex justify-content-between">
                     <nav class="pull-left">
@@ -235,92 +235,127 @@
                     </div>
                 </div>
             </footer>
+
         </div>
+        <!--   Core JS Files   -->
+        <script src="styles/assets/js/core/jquery-3.7.1.min.js"></script>
+        <script src="styles/assets/js/core/popper.min.js"></script>
+        <script src="styles/assets/js/core/bootstrap.min.js"></script>
 
+        <!-- jQuery Scrollbar -->
+        <script src="styles/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
 
-    </div>
-    <!--   Core JS Files   -->
-    <script src="styles/assets/js/core/jquery-3.7.1.min.js"></script>
-    <script src="styles/assets/js/core/popper.min.js"></script>
-    <script src="styles/assets/js/core/bootstrap.min.js"></script>
+        <!-- Chart JS -->
+        <script src="styles/assets/js/plugin/chart.js/chart.min.js"></script>
 
-    <!-- jQuery Scrollbar -->
-    <script src="styles/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+        <!-- jQuery Sparkline -->
+        <script src="styles/assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js"></script>
 
-    <!-- Chart JS -->
-    <script src="styles/assets/js/plugin/chart.js/chart.min.js"></script>
+        <!-- Chart Circle -->
+        <script src="styles/assets/js/plugin/chart-circle/circles.min.js"></script>
 
-    <!-- jQuery Sparkline -->
-    <script src="styles/assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js"></script>
+        <!-- Datatables -->
+        <script src="styles/assets/js/plugin/datatables/datatables.min.js"></script>
 
-    <!-- Chart Circle -->
-    <script src="styles/assets/js/plugin/chart-circle/circles.min.js"></script>
+        <!-- Bootstrap Notify -->
+        <script src="styles/assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
 
-    <!-- Datatables -->
-    <script src="styles/assets/js/plugin/datatables/datatables.min.js"></script>
+        <!-- jQuery Vector Maps -->
+        <script src="styles/assets/js/plugin/jsvectormap/jsvectormap.min.js"></script>
+        <script src="styles/assets/js/plugin/jsvectormap/world.js"></script>
 
-    <!-- Bootstrap Notify -->
-    <script src="styles/assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
+        <!-- Sweet Alert -->
+        <script src="styles/assets/js/plugin/sweetalert/sweetalert.min.js"></script>
 
-    <!-- jQuery Vector Maps -->
-    <script src="styles/assets/js/plugin/jsvectormap/jsvectormap.min.js"></script>
-    <script src="styles/assets/js/plugin/jsvectormap/world.js"></script>
+        <!-- Kaiadmin JS -->
+        <script src="styles/assets/js/kaiadmin.min.js"></script>
 
-    <!-- Sweet Alert -->
-    <script src="styles/assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+        <!-- Script para jalar los datos del fokin reportes -->
+        <script src="js/historialReportes.js"></script>
 
-    <!-- Kaiadmin JS -->
-    <script src="styles/assets/js/kaiadmin.min.js"></script>
+        <script>
+            $("#lineChart").sparkline([102, 109, 120, 99, 110, 105, 115], {
+                type: "line",
+                height: "70",
+                width: "100%",
+                lineWidth: "2",
+                lineColor: "#177dff",
+                fillColor: "rgba(23, 125, 255, 0.14)",
+            });
 
-    <!-- Script para jalar los datos del fokin reportes -->
-    <script src="js/historialReportes.js"></script>
+            $("#lineChart2").sparkline([99, 125, 122, 105, 110, 124, 115], {
+                type: "line",
+                height: "70",
+                width: "100%",
+                lineWidth: "2",
+                lineColor: "#f3545d",
+                fillColor: "rgba(243, 84, 93, .14)",
+            });
 
-    <script>
-        $("#lineChart").sparkline([102, 109, 120, 99, 110, 105, 115], {
-            type: "line",
-            height: "70",
-            width: "100%",
-            lineWidth: "2",
-            lineColor: "#177dff",
-            fillColor: "rgba(23, 125, 255, 0.14)",
-        });
+            $("#lineChart3").sparkline([105, 103, 123, 100, 95, 105, 115], {
+                type: "line",
+                height: "70",
+                width: "100%",
+                lineWidth: "2",
+                lineColor: "#ffa534",
+                fillColor: "rgba(255, 165, 52, .14)",
+            });
+        </script>
 
-        $("#lineChart2").sparkline([99, 125, 122, 105, 110, 124, 115], {
-            type: "line",
-            height: "70",
-            width: "100%",
-            lineWidth: "2",
-            lineColor: "#f3545d",
-            fillColor: "rgba(243, 84, 93, .14)",
-        });
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const user = JSON.parse(localStorage.getItem("user"));
 
-        $("#lineChart3").sparkline([105, 103, 123, 100, 95, 105, 115], {
-            type: "line",
-            height: "70",
-            width: "100%",
-            lineWidth: "2",
-            lineColor: "#ffa534",
-            fillColor: "rgba(255, 165, 52, .14)",
-        });
-    </script>
+                if (user) {
+                    document.getElementById("userName").textContent = user.nombre;
+                    document.getElementById("userBoxName").textContent = user.nombre;
+                    document.getElementById("userEmail").textContent = user.correo;
+                }
+            });
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const user = JSON.parse(localStorage.getItem("user"));
+            document.getElementById("logout").addEventListener("click", function () {
+                localStorage.removeItem("user");
+                window.location.href = "login.html";
+            });
+        </script>
 
-            if (user) {
-                document.getElementById("userName").textContent = user.nombre;
-                document.getElementById("userBoxName").textContent = user.nombre;
-                document.getElementById("userEmail").textContent = user.correo;
+        <style>
+            .list-group-item {
+                transition: box-shadow 0.2s ease;
             }
-        });
 
-        document.getElementById("logout").addEventListener("click", function () {
-            localStorage.removeItem("user");
-            window.location.href = "login.html";
-        });
-    </script>
+            .list-group-item:hover {
+                box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.15);
+            }
 
+            .badge {
+                font-size: 0.85rem;
+                padding: 0.4em 0.7em;
+                border-radius: 0.5rem;
+            }
+
+            .bg-purple-custom {
+                background-color: #6f42c1;
+                color: white;
+            }
+
+            .table td,
+            .table th {
+                vertical-align: middle;
+            }
+
+            .badge {
+                font-size: 0.8rem;
+                padding: 0.45em 0.8em;
+                border-radius: 0.5rem;
+                font-weight: 500;
+            }
+
+            select.form-control,
+            input.form-control {
+                margin-bottom: 10px;
+            }
+        </style>
 
 </body>
 

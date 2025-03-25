@@ -174,6 +174,59 @@ app.get("/equipos", async (req, res) => {
     }
 });
 
+// ✅ Agregar nuevo equipo a un laboratorio
+app.post("/api/equipos", async (req, res) => {
+    try {
+        const { numero_equipo, id_laboratorio, estado } = req.body;
+
+        // Validación básica
+        if (!numero_equipo || !id_laboratorio) {
+            return res.status(400).json({ message: "⚠️ Todos los campos son obligatorios (excepto estado)." });
+        }
+
+        let pool = await sql.connect(dbConfig);
+
+        await pool.request()
+            .input("numero_equipo", sql.NVarChar, numero_equipo)
+            .input("id_laboratorio", sql.Int, id_laboratorio)
+            .input("estado", sql.NVarChar, estado || "Desconocido") // Si no mandas estado, pone "Desconocido"
+            .query(`
+                INSERT INTO Equipos (numero_equipo, id_laboratorio, estado)
+                VALUES (@numero_equipo, @id_laboratorio, @estado)
+            `);
+
+        res.status(201).json({ message: "✅ Equipo agregado exitosamente." });
+    } catch (err) {
+        console.error("❌ Error al agregar equipo:", err);
+        res.status(500).json({ message: "Error interno del servidor", error: err.message });
+    }
+});
+
+app.put("/api/equipos/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { numero_equipo } = req.body;
+
+        if (!numero_equipo) {
+            return res.status(400).json({ message: "El nombre del equipo es obligatorio" });
+        }
+
+        let pool = await sql.connect(dbConfig);
+        await pool.request()
+            .input("id_equipo", sql.Int, id)
+            .input("numero_equipo", sql.NVarChar, numero_equipo)
+            .query(`
+                UPDATE Equipos 
+                SET numero_equipo = @numero_equipo 
+                WHERE id_equipo = @id_equipo
+            `);
+
+        res.json({ message: "✅ Nombre del equipo actualizado correctamente" });
+    } catch (err) {
+        res.status(500).json({ message: "❌ Error al actualizar nombre del equipo", error: err.message });
+    }
+});
+
 //obtener laboratorios para verlos en el dropdown
 
 app.get("/laboratorios", async (req, res) => {
@@ -227,6 +280,7 @@ app.get("/reportes/:id_usuario", async (req, res) => {
     }
 });
 
+//reportes por id de equipo
 app.get("/api/reportesPorEquipo/:id_equipo", async (req, res) => {
     const { id_equipo } = req.params;
     try {
@@ -234,7 +288,7 @@ app.get("/api/reportesPorEquipo/:id_equipo", async (req, res) => {
         const result = await pool.request()
             .input("id_equipo", sql.Int, id_equipo)
             .query(`
-                SELECT descripcion, fecha_hora, estatus, observaciones
+                SELECT id_reporte, descripcion, fecha_hora, estatus, observaciones
                 FROM Reportes 
                 WHERE id_equipo = @id_equipo
                 ORDER BY fecha_hora DESC
@@ -362,9 +416,6 @@ app.get("/api/usuarios", async (req, res) => {
     }
 });
 
-
-
-
 app.get("/api/usuarios/:id", async (req, res) => {
     try {
         const { id } = req.params;
@@ -460,7 +511,6 @@ app.post("/api/usuarios", async (req, res) => {
         res.status(500).json({ message: "Error interno del servidor", error: err.message });
     }
 });
-
 
 // Actualizar un usuario
 app.put("/api/usuarios/:id", async (req, res) => {
@@ -597,8 +647,6 @@ app.get('/api/roles', async (req, res) => {
     }
 });
 
-
-
 app.get("/api/laboratorios/:id/equipos", async (req, res) => {
     const { id } = req.params;
 
@@ -607,13 +655,34 @@ app.get("/api/laboratorios/:id/equipos", async (req, res) => {
     }
 
     try {
-        let pool = await sql.connect(dbConfig);
-        let result = await pool.request()
-            .input("id_laboratorio", sql.Int, id)
-            .query("SELECT id_equipo, numero_equipo, estado FROM Equipos WHERE id_laboratorio = @id_laboratorio");
+        const pool = await sql.connect(dbConfig);
 
-        res.json(result.recordset);
+        // Obtener todos los equipos del laboratorio
+        const equiposResult = await pool.request()
+            .input("id_laboratorio", sql.Int, id)
+            .query("SELECT id_equipo, numero_equipo FROM Equipos WHERE id_laboratorio = @id_laboratorio");
+
+        const equipos = equiposResult.recordset;
+
+        // Recorremos cada equipo y buscamos su último estado desde Reportes
+        for (let equipo of equipos) {
+            const estadoResult = await pool.request()
+                .input("id_equipo", sql.Int, equipo.id_equipo)
+                .query(`
+                    SELECT TOP 1 estatus 
+                    FROM Reportes 
+                    WHERE id_equipo = @id_equipo 
+                    ORDER BY fecha_hora DESC
+                `);
+
+            equipo.estado = estadoResult.recordset.length > 0 
+                ? estadoResult.recordset[0].estatus 
+                : "Sin reportes";
+        }
+
+        res.json(equipos);
     } catch (error) {
+        console.error("❌ Error al obtener equipos con estados:", error);
         res.status(500).json({ message: "Error al obtener equipos", error: error.message });
     }
 });
@@ -630,7 +699,7 @@ app.get("/api/reportesPorEquipo/:id_equipo", async (req, res) => {
                 FROM Reportes 
                 WHERE id_equipo = @id_equipo
                 ORDER BY fecha_hora DESC
-            `); // ← ¡Ahora sí incluye `id_reporte` y `observaciones`!
+            `); 
 
         res.json(result.recordset);
     } catch (err) {
@@ -660,9 +729,6 @@ app.post("/api/laboratorios", async (req, res) => {
     }
 });
 
-
-
-
 // Actualizar un laboratorio
 app.put("/api/laboratorios/:id", async (req, res) => {
     try {
@@ -691,7 +757,6 @@ app.put("/api/laboratorios/:id", async (req, res) => {
     }
 });
 
-
 // Eliminar un laboratorio
 app.delete("/api/laboratorios/:id", async (req, res) => {
     try {
@@ -705,8 +770,6 @@ app.delete("/api/laboratorios/:id", async (req, res) => {
         res.status(500).json({ message: "Error al eliminar laboratorio", error: err.message });
     }
 });
-
-
 
 import("open").then((open) => {
     open.default(`http://localhost:${PORT}`);
