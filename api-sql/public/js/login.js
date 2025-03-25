@@ -1,5 +1,5 @@
 document.getElementById("loginForm").addEventListener("submit", async function (event) {
-    event.preventDefault(); 
+    event.preventDefault();
 
     const correo = document.getElementById("correo").value;
     const password = document.getElementById("password").value;
@@ -43,4 +43,37 @@ document.getElementById("loginForm").addEventListener("submit", async function (
         message.classList.add("alert-danger");
         message.textContent = "Error en la conexión con el servidor.";
     }
+
+    // Abrir modal
+    document.querySelector("a[href='#']").addEventListener("click", function (e) {
+        e.preventDefault();
+        const modal = new bootstrap.Modal(document.getElementById("modalRecuperar"));
+        modal.show();
+    });
+
+    // Enviar formulario de recuperación
+    document.getElementById("formRecuperar").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const correo = document.getElementById("correoRecuperacion").value.trim();
+
+        try {
+            const response = await fetch("http://localhost:3000/api/recuperar-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ correo })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                Swal.fire("📧 Enviado", data.message || "Revisa tu correo para cambiar tu contraseña", "success");
+                bootstrap.Modal.getInstance(document.getElementById("modalRecuperar")).hide();
+            } else {
+                Swal.fire("❌ Error", data.message || "No se encontró el correo", "error");
+            }
+        } catch (err) {
+            Swal.fire("❌ Error", "No se pudo enviar el correo de recuperación", "error");
+        }
+    });
+
 });

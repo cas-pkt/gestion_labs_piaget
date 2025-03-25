@@ -45,18 +45,18 @@ document.addEventListener("DOMContentLoaded", async function () {
         const laboratorioSet = new Set();
         const nivelSet = new Set();
         const rolSet = new Set();
-    
+
         usuariosOriginales.forEach(user => {
             if (user.laboratorio) laboratorioSet.add(user.laboratorio);
             if (user.nivel) nivelSet.add(user.nivel);
             if (user.rol) rolSet.add(user.rol);
         });
-    
+
         popularSelect("filtroLaboratorio", laboratorioSet);
         popularSelect("filtroNivel", nivelSet);
         popularSelect("filtroRol", rolSet);
     }
-    
+
     function popularSelect(id, valores) {
         const select = document.getElementById(id);
         select.innerHTML = '<option value="">Todos</option>';
@@ -67,29 +67,29 @@ document.addEventListener("DOMContentLoaded", async function () {
             select.appendChild(option);
         });
     }
-    
+
     function aplicarFiltros() {
         const usuarioInput = document.getElementById("filtroUsuario").value.toLowerCase();
         const labFiltro = document.getElementById("filtroLaboratorio").value;
         const nivelFiltro = document.getElementById("filtroNivel").value;
         const rolFiltro = document.getElementById("filtroRol").value;
-    
+
         const filtrados = usuariosOriginales.filter(u => {
             const coincideUsuario = u.nombre.toLowerCase().includes(usuarioInput) || u.correo.toLowerCase().includes(usuarioInput);
             const coincideLab = !labFiltro || u.laboratorio === labFiltro;
             const coincideNivel = !nivelFiltro || u.nivel === nivelFiltro;
             const coincideRol = !rolFiltro || u.rol === rolFiltro;
-    
+
             return coincideUsuario && coincideLab && coincideNivel && coincideRol;
         });
-    
+
         mostrarUsuarios(filtrados);
     }
-    
+
     ["filtroUsuario", "filtroLaboratorio", "filtroNivel", "filtroRol"].forEach(id => {
         document.getElementById(id).addEventListener("input", aplicarFiltros);
     });
-    
+
 
     function mostrarUsuarios(lista) {
         listaUsuarios.innerHTML = "";
@@ -184,7 +184,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     console.error("❌ Error al obtener usuario:", usuario.message);
                     return;
                 }
-
                 document.getElementById("nombre").value = usuario.nombre || "";
                 document.getElementById("correo").value = usuario.correo || "";
 
@@ -219,14 +218,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const response = await fetch(`http://localhost:3000/api/usuarios/${id}`, {
                         method: "DELETE"
                     });
-
                     const resultado = await response.json();
-
                     if (!response.ok) {
                         Swal.fire("Error", resultado.message, "error");
                         return;
                     }
-
                     Swal.fire("Eliminado", resultado.message, "success");
                     cargarUsuarios();
                 } catch (error) {
@@ -236,8 +232,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     });
-
-
 
     async function cargarRoles(rolSeleccionado = "") {
         try {
@@ -266,7 +260,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const response = await fetch("http://localhost:3000/api/laboratorios");
             const laboratorios = await response.json();
             const select = document.getElementById("laboratorio");
-            select.innerHTML = `<option value="" disabled>Selecciona un laboratorio</option>`;
+            select.innerHTML = `<option value="">Selecciona un laboratorio</option>`;
 
             laboratorios.forEach(lab => {
                 const option = document.createElement("option");
@@ -282,27 +276,23 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    async function cargarNiveles(seleccionado = "") {
-        const niveles = [
-            { id: 1, nombre: "PrimeroPrimaria" },
-            { id: 2, nombre: "SegundoPrimaria" },
-            { id: 3, nombre: "TerceroPrimaria" },
-            { id: 4, nombre: "CuartoPrimaria" },
-            { id: 5, nombre: "QuintoPrimaria" },
-            { id: 6, nombre: "SextoPrimaria" },
-        ];
-        const select = document.getElementById("nivel");
-        select.innerHTML = `<option value="" disabled>Selecciona un nivel</option>`;
+    async function cargarNiveles() {
+        const selectNivel = document.getElementById("nivel"); // o #nivelUsuario
+        selectNivel.innerHTML = `<option value="">Selecciona un nivel</option>`;
 
-        niveles.forEach(nivel => {
-            const option = document.createElement("option");
-            option.value = nivel.id;
-            option.textContent = nivel.nombre;
-            if (nivel.nombre === seleccionado) {
-                option.selected = true;
-            }
-            select.appendChild(option);
-        });
+        try {
+            const res = await fetch("http://localhost:3000/api/niveles");
+            const niveles = await res.json();
+
+            niveles.forEach(nivel => {
+                const option = document.createElement("option");
+                option.value = nivel.id_nivel;
+                option.textContent = nivel.nombre_nivel;
+                selectNivel.appendChild(option);
+            });
+        } catch (err) {
+            console.error("❌ Error al cargar niveles:", err);
+        }
     }
 
     function validarFormulario() {
@@ -326,6 +316,54 @@ document.addEventListener("DOMContentLoaded", async function () {
         return valido;
     }
 
+    async function cargarNotificaciones() {
+        const user = JSON.parse(localStorage.getItem("user"));
+        const res = await fetch(`/api/notificaciones/${user.id_usuario}`);
+        const notificaciones = await res.json();
+    
+        const notifBox = document.querySelector(".notif-center");
+        notifBox.innerHTML = "";
+    
+        if (notificaciones.length === 0) {
+            notifBox.innerHTML = `
+                <div class="text-center text-muted small py-2">No hay notificaciones nuevas</div>
+            `;
+        } else {
+            notificaciones.forEach(n => {
+                notifBox.innerHTML += `
+                    <div class="d-flex justify-content-between align-items-start position-relative notification-item ${n.leida ? 'leida' : ''}" data-id="${n.id_notificacion}">
+                        <a href="#" onclick="marcarLeida(${n.id_notificacion})" class="d-flex w-100 text-decoration-none text-dark">
+                            <div class="notif-icon notif-primary"><i class="fa fa-bell"></i></div>
+                            <div class="notif-content">
+                                <span class="block">${n.mensaje}</span>
+                                <span class="time">${new Date(n.fecha).toLocaleString()}</span>
+                            </div>
+                        </a>
+                        <button onclick="eliminarNotificacion(${n.id_notificacion})" class="btn-close btn-close-white ms-2 position-absolute top-0 end-0" style="font-size: 0.6rem;" aria-label="Close"></button>
+                    </div>
+                `;
+            });
+        }
+    
+        // Mostrar solo la cantidad de notificaciones NO leídas
+        const noLeidas = notificaciones.filter(n => !n.leida);
+        document.querySelector(".notification").textContent = noLeidas.length;
+    }
+    
+    // ✅ Declarar funciones globales FUERA de cargarNotificaciones
+    window.marcarLeida = async function(id) {
+        await fetch(`/api/notificaciones/${id}/leida`, { method: "PUT" });
+        cargarNotificaciones();
+    };
+    
+    window.eliminarNotificacion = async function(id) {
+        await fetch(`/api/notificaciones/${id}`, { method: "DELETE" });
+        cargarNotificaciones();
+    };
+    
+
+    cargarNotificaciones();
+    setInterval(cargarNotificaciones, 10000); // actualiza cada 10 segundos
     cargarUsuarios().then(cargarOpcionesFiltros);
     cargarLaboratorios();
     cargarRoles();

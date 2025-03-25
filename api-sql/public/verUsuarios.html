@@ -150,19 +150,12 @@
                                     <li>
                                         <div class="notif-scroll scrollbar-outer">
                                             <div class="notif-center">
-                                                <a href="#">
-                                                    <div class="notif-icon notif-primary">
-                                                        <i class="fa fa-user-plus"></i>
-                                                    </div>
-                                                    <div class="notif-content">
-                                                        <span class="block"> New user registered </span>
-                                                        <span class="time">5 minutes ago</span>
-                                                    </div>
-                                                </a>
+                                                <!-- AQUÍ SE CARGARÁN LAS NOTIFICACIONES DINÁMICAMENTE -->
                                             </div>
                                         </div>
                                     </li>
                                 </ul>
+
                             </li>
                             <li class="nav-item topbar-user dropdown hidden-caret">
                                 <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#">
@@ -230,7 +223,7 @@
                                 <button id="btnLimpiarFiltros" class="btn btn-outline-secondary btn-sm mt-2">
                                     Limpiar Filtros
                                 </button>
-                                
+
                             </div>
                         </div>
                     </div>
@@ -399,7 +392,17 @@
         });
     </script>
 
+    <style>
+        .notification-item.leida {
+            background-color: #f0f0f0;
+            opacity: 0.7;
+        }
 
+        .notification-item {
+            padding: 10px;
+            border-bottom: 1px solid #eaeaea;
+        }
+    </style>
 
 </body>
 
