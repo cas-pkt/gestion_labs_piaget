@@ -126,7 +126,7 @@
                 <a class="nav-link dropdown-toggle" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown"
                   aria-haspopup="true" aria-expanded="false">
                   <i class="fa fa-bell"></i>
-                  <span class="notification">4</span>
+                  <span class="notification"></span>
                 </a>
                 <ul class="dropdown-menu notif-box animated fadeIn" aria-labelledby="notifDropdown">
                   <li>
@@ -137,8 +137,8 @@
                             <i class="fa fa-user-plus"></i>
                           </div>
                           <div class="notif-content">
-                            <span class="block"> New user registered </span>
-                            <span class="time">5 minutes ago</span>
+                            <span class="block"> </span>
+                            <span class="time"></span>
                           </div>
                         </a>
                       </div>
@@ -203,21 +203,25 @@
                     </table>
                     <div class="modal fade" id="miModal" tabindex="-1" aria-labelledby="modalTitulo" aria-hidden="true">
                       <div class="modal-dialog">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <h5 class="modal-title" id="modalTitulo">Descripción</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                              aria-label="Cerrar"></button>
+                          <div class="modal-content">
+                              <div class="modal-header">
+                                  <h5 class="modal-title" id="modalTitulo">Detalles del Reporte</h5>
+                                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                              </div>
+                              <div class="modal-body">
+                                  <h6 class="fw-bold">Descripción:</h6>
+                                  <p id="descripcionProblema"></p>
+                                  
+                                  
+                                  <h6 class="fw-bold">Observaciones:</h6>
+                                  <p id="observacionesProblema" class="text-muted">No hay observaciones aún.</p>
+                              </div>
+                              <div class="modal-footer">
+                                  <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+                              </div>
                           </div>
-                          <div class="modal-body">
-                            <p id="descripcionProblema"></p>
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
-                          </div>
-                        </div>
                       </div>
-                    </div>
+                  </div>
                   </div>
                 </div>
               </div>
@@ -236,6 +240,24 @@
       </footer>
     </div>
   </div>
+
+  <style>
+    .notif-icon  {
+    width: 40px;
+    height: 40px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notif-icon i {
+    font-size: 1.5rem; /* Ajusta el tamaño aquí */
+}
+
+  </style>
   <!--   Core JS Files   -->
   <script src="styles/assets/js/core/jquery-3.7.1.min.js"></script>
   <script src="styles/assets/js/core/popper.min.js"></script>
@@ -314,6 +336,7 @@
       }
     });
   </script>
+  
 </body>
 
 </html>

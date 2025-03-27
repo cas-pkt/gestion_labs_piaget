@@ -1,21 +1,25 @@
 require("dotenv").config();
 const express = require("express");
-const PORT = process.env.PORT || 3000;
 const path = require("path");
 const sql = require("mssql");
 const cors = require("cors");
-const app = express();
 const bcrypt = require("bcrypt");
 
-app.use(express.json());
+const app = express();
 app.use(cors());
 
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // Ruta para abrir login.html
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "login.html"));
 });
+
+
+const PORT = process.env.PORT || 3000;
+
+
 
 // Configuración de la base de datos
 const dbConfig = {
@@ -32,6 +36,8 @@ const dbConfig = {
 sql.connect(dbConfig)
     .then(() => console.log("Conexión exitosa a SQL Server :3!"))
     .catch(err => console.error(" :( Error en la conexión a SQL Server:", err));
+
+
 
 // REGISTRAR
 app.post("/api/register", async (req, res) => {
@@ -265,7 +271,7 @@ app.get("/equipos/:id_laboratorio", async (req, res) => {
     }
 });
 
-//Ver reportes
+// Ver reportes
 app.get("/reportes/:id_usuario", async (req, res) => {
     const { id_usuario } = req.params;
 
@@ -274,7 +280,7 @@ app.get("/reportes/:id_usuario", async (req, res) => {
         let result = await pool.request()
             .input("id_usuario", sql.Int, id_usuario)
             .query(`
-                SELECT r.id_reporte, r.descripcion, r.fecha_hora, r.estatus, 
+                SELECT r.id_reporte, r.descripcion, r.observaciones, r.fecha_hora, r.estatus, 
                 e.numero_equipo, l.nombre_laboratorio
                 FROM Reportes r
                 INNER JOIN Equipos e ON r.id_equipo = e.id_equipo
@@ -288,6 +294,7 @@ app.get("/reportes/:id_usuario", async (req, res) => {
         res.status(500).json({ message: "Error al obtener reportes", error: error.message });
     }
 });
+
 
 //reportes por id de equipo
 app.get("/api/reportesPorEquipo/:id_equipo", async (req, res) => {
@@ -366,6 +373,9 @@ app.put("/api/reportes/:id", async (req, res) => {
                 .input("id_usuario", sql.Int, id_usuario)
                 .input("mensaje", sql.NVarChar, mensaje)
                 .query("INSERT INTO Notificaciones (id_usuario, mensaje) VALUES (@id_usuario, @mensaje)");
+            
+                // Enviar notificación en tiempo real al usuario afectado, IAN AGREGUE ESTO CON LA LIBRERIA DE SOCKER IO
+            io.to(`usuario_${id_usuario}`).emit("notificacion", { mensaje });
         }
 
         // Notificación general para admins (usuario 0 por ejemplo)

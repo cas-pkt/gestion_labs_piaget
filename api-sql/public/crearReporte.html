@@ -6,8 +6,6 @@
   <title>Reportes | Crear Reporte</title>
   <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
   <link rel="icon" href="styles/images/logo-piaget.png" type="image/x-icon" />
-
-
   <!-- Fonts and icons -->
   <script src="styles/assets/js/plugin/webfont/webfont.min.js"></script>
   <script>
@@ -128,20 +126,20 @@
                 <a class="nav-link dropdown-toggle" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown"
                   aria-haspopup="true" aria-expanded="false">
                   <i class="fa fa-bell"></i>
-                  <span class="notification">4</span>
+                  <span id="notification-count" class="notification"></span>
                 </a>
                 <ul class="dropdown-menu notif-box animated fadeIn" aria-labelledby="notifDropdown">
-
                   <li>
                     <div class="notif-scroll scrollbar-outer">
-                      <div class="notif-center">
+                      <div class="notif-center" id="notificaciones-list">
+
                         <a href="#">
                           <div class="notif-icon notif-primary">
                             <i class="fa fa-user-plus"></i>
                           </div>
                           <div class="notif-content">
-                            <span class="block"> New user registered </span>
-                            <span class="time">5 minutes ago</span>
+                            <span class="block">  </span>
+                            <span class="time"></span>
                           </div>
                         </a>
                       </div>
@@ -154,7 +152,7 @@
                 <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#" aria-expanded="false">
                   <span class="profile-username">
                     <span class="op-7">Hola,</span>
-                    <span id="nombreUsuario" class="fw-bold"></span>
+                    <span id="userNameDisplay" class="fw-bold"></span>
                   </span>
                 </a>
                 <ul class="dropdown-menu dropdown-user animated fadeIn">
@@ -162,7 +160,7 @@
                     <li>
                       <div class="user-box">
                         <div class="u-text">
-                          <p id="correoUsuario" class="text-muted"></p>
+                          <p id="userEmailDisplay" class="text-muted">correo@example.com</p>
                         </div>
                       </div>
                     </li>
@@ -207,7 +205,8 @@
                       <div class="form-group">
                         <label for="descripcionProblema">Describe el problema </label>
                         <div class="input-group">
-                          <textarea class="form-control" id="descripcionProblema" aria-label="With textarea" placeholder="Describa el problema..."></textarea>
+                          <textarea class="form-control" id="descripcionProblema" aria-label="With textarea"
+                            placeholder="Describa el problema..."></textarea>
                         </div>
                       </div>
                     </div>
@@ -269,8 +268,9 @@
   <!-- Kaiadmin JS -->
   <script src="styles/assets/js/kaiadmin.min.js"></script>
 
-<script src="js/logout.js"></script>
-<script src="js/crearReporte.js"></script>
+  <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+  <script src="js/logout.js"></script>
+  <script src="js/crearReporte.js"></script>
   <script>
     $("#lineChart").sparkline([102, 109, 120, 99, 110, 105, 115], {
       type: "line",
@@ -301,17 +301,14 @@
   </script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      const userNombre = localStorage.getItem("userNombre") || "Invitado";
-      const userCorreo = localStorage.getItem("userCorreo") || "Sin correo";
-
-      const userNameElement = document.getElementById("nombreUsuario");
-      const userEmailElement = document.getElementById("correoUsuario");
-
-      if (userNameElement && userEmailElement) {
-        userNameElement.textContent = userNombre;
-        userEmailElement.textContent = userCorreo;
+      const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
+      const user = JSON.parse(storage.getItem("user"));
+      if (user) {
+        document.getElementById("userNameDisplay").textContent = user.nombre;
+        document.getElementById("userEmailDisplay").textContent = user.correo;
       } else {
-        console.error("Error: No se encontraron los elementos en el DOM.");
+        document.getElementById("userNameDisplay").textContent = "Usuario no identificado";
+        document.getElementById("userEmailDisplay").textContent = "";
       }
     });
   </script>
