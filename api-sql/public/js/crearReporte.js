@@ -1,4 +1,68 @@
+
+
+
+// Obtener usuario logueado
+const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
+const usuario = JSON.parse(storage.getItem("user"));
+
+// Función para actualizar el dropdown de notificaciones
+
+
 document.addEventListener("DOMContentLoaded", async function () {
+    async function cargarNotificaciones() {
+        const user = JSON.parse(localStorage.getItem("user"));
+        const res = await fetch(`/api/notificaciones/${user.id_usuario}`);
+        const notificaciones = await res.json();
+    
+        const notifBox = document.querySelector(".notif-center");
+        notifBox.innerHTML = "";
+    
+        if (notificaciones.length === 0) {
+            notifBox.innerHTML = `
+                <div class="text-center text-muted small py-2">No hay notificaciones nuevas</div>
+            `;
+        } else {
+            notificaciones.forEach(n => {
+                notifBox.innerHTML += `
+                    <div class="d-flex justify-content-between align-items-center position-relative notification-item p-2 rounded border ${n.leida ? 'bg-light' : 'bg-white border-primary'}" data-id="${n.id_notificacion}">
+                        <a href="#" onclick="marcarLeida(${n.id_notificacion})" class="d-flex w-100 text-decoration-none text-dark">
+                            <div class="notif-icon ${n.leida ? 'bg-secondary' : 'bg-primary'} text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                                <i class="fa fa-bell" style="font-size: 20px;"></i>
+                            </div>
+                            <div class="notif-content ms-2 flex-grow-1">
+                                <span class="block fw-bold">${n.mensaje}</span>
+                                <span class="time d-block small text-muted">${new Date(n.fecha).toLocaleString()}</span>
+                            </div>
+                        </a>
+                        <button onclick="eliminarNotificacion(${n.id_notificacion})" 
+                            class="position-absolute top-0 end-0 border-0 bg-transparent p-1"
+                            style="font-size: 12px; color: black;">
+                            <i class="fa fa-times"></i>
+                        </button>                         
+                    </div>
+                `;
+            });
+        }
+    
+        // Mostrar solo la cantidad de notificaciones NO leídas
+        const noLeidas = notificaciones.filter(n => !n.leida);
+        document.querySelector(".notification").textContent = noLeidas.length;
+    }
+    
+    // ✅ Declarar funciones globales FUERA de cargarNotificaciones
+    window.marcarLeida = async function(id) {
+        await fetch(`/api/notificaciones/${id}/leida`, { method: "PUT" });
+        cargarNotificaciones();
+    };
+    
+    window.eliminarNotificacion = async function(id) {
+        await fetch(`/api/notificaciones/${id}`, { method: "DELETE" });
+        cargarNotificaciones();
+    };
+    
+
+    cargarNotificaciones();
+    setInterval(cargarNotificaciones, 10000); // actualiza cada 10 segundos
     await cargarLaboratorios();
 });
 
@@ -60,7 +124,6 @@ function limpiarEquipos() {
     let selectEquipos = document.getElementById("equipoSelect");
     selectEquipos.innerHTML = "<option disabled selected value=''>Selecciona un equipo</option>";
 }
-
 
 
 

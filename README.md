@@ -7,3 +7,4 @@ Condiciones:
 - ARREGLAR LOS FILTROS DEL HISTORIAL, ASÍ COMO TAMBIÉN ASIGNAR LOS NIVELES Y EL NOMBRE DEL USUARIO Y MEJORAR LA VISTA DEL HISTORIAL.
 - Revisar el código para recuperación de contraseña.
 - Adaptar las notificaciones en todas las vistas.
+- Cambiar el padding del login.
