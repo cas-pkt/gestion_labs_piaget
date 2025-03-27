@@ -32,6 +32,8 @@
     <link rel="stylesheet" href="styles/assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="styles/assets/css/plugins.min.css" />
     <link rel="stylesheet" href="styles/assets/css/kaiadmin.min.css" />
+    <link rel="stylesheet" href="styles/assets/css/notif.css" />
+    
     <link rel="shortcut icon" href="styles/images/logo-piaget.png" type="image/x-icon">
 </head>
 
@@ -142,21 +144,13 @@
                                 <a class="nav-link dropdown-toggle" href="#" id="notifDropdown" role="button"
                                     data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     <i class="fa fa-bell"></i>
-                                    <span class="notification">4</span>
+                                    <span class="notification"></span>
                                 </a>
                                 <ul class="dropdown-menu notif-box animated fadeIn" aria-labelledby="notifDropdown">
                                     <li>
                                         <div class="notif-scroll scrollbar-outer">
                                             <div class="notif-center">
-                                                <a href="#">
-                                                    <div class="notif-icon notif-primary">
-                                                        <i class="fa fa-user-plus"></i>
-                                                    </div>
-                                                    <div class="notif-content">
-                                                        <span class="block"> New user registered </span>
-                                                        <span class="time">5 minutes ago</span>
-                                                    </div>
-                                                </a>
+                                                <!-- AQUÍ SE CARGARÁN LAS NOTIFICACIONES DINÁMICAMENTE -->
                                             </div>
                                         </div>
                                     </li>
@@ -194,32 +188,38 @@
                         <div class="card-header">
                             <div class="card-title">Historial de Reportes</div>
                             <div class="row">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label>Filtrar por Fecha</label>
                                     <input type="date" id="filterFecha" class="form-control">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label>Filtrar por Usuario</label>
                                     <select id="filterUsuario" class="form-control">
                                         <option value="">Todos</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label>Filtrar por Laboratorio</label>
                                     <select id="filterLaboratorio" class="form-control">
                                         <option value="">Todos</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label>Filtrar por Nivel</label>
                                     <select id="filterNivel" class="form-control">
+                                        <option value="">Todos</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Filtrar por Estatus</label>
+                                    <select id="filterEstatus" class="form-control">
                                         <option value="">Todos</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
                         <div class="card-body">
-                            <div id="historialReportes" class="list-group">
+                            <div id="historialReportes" class="container-fluid">
                                 <!-- Reportes dinámicos -->
                             </div>
                         </div>
@@ -272,6 +272,7 @@
 
         <!-- Script para jalar los datos del fokin reportes -->
         <script src="js/historialReportes.js"></script>
+        <script src="js/navUser.js"></script>
 
         <script>
             $("#lineChart").sparkline([102, 109, 120, 99, 110, 105, 115], {
@@ -301,61 +302,6 @@
                 fillColor: "rgba(255, 165, 52, .14)",
             });
         </script>
-
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                const user = JSON.parse(localStorage.getItem("user"));
-
-                if (user) {
-                    document.getElementById("userName").textContent = user.nombre;
-                    document.getElementById("userBoxName").textContent = user.nombre;
-                    document.getElementById("userEmail").textContent = user.correo;
-                }
-            });
-
-            document.getElementById("logout").addEventListener("click", function () {
-                localStorage.removeItem("user");
-                window.location.href = "login.html";
-            });
-        </script>
-
-        <style>
-            .list-group-item {
-                transition: box-shadow 0.2s ease;
-            }
-
-            .list-group-item:hover {
-                box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.15);
-            }
-
-            .badge {
-                font-size: 0.85rem;
-                padding: 0.4em 0.7em;
-                border-radius: 0.5rem;
-            }
-
-            .bg-purple-custom {
-                background-color: #6f42c1;
-                color: white;
-            }
-
-            .table td,
-            .table th {
-                vertical-align: middle;
-            }
-
-            .badge {
-                font-size: 0.8rem;
-                padding: 0.45em 0.8em;
-                border-radius: 0.5rem;
-                font-weight: 500;
-            }
-
-            select.form-control,
-            input.form-control {
-                margin-bottom: 10px;
-            }
-        </style>
 
 </body>
 

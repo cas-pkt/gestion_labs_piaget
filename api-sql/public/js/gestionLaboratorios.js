@@ -34,10 +34,11 @@ document.addEventListener("DOMContentLoaded", async function () {
             labs.forEach((lab, i) => {
                 tabsContainer.innerHTML += `
                     <li class="nav-item">
-                        <button class="nav-link ${i === 0 ? 'active' : ''}" data-bs-toggle="tab" data-bs-target="#${prefix}-${lab.id_laboratorio}">
-                            ${lab.nombre_laboratorio}
+                        <button class="nav-link ${i === 0 ? 'active' : ''}" data-id="${lab.id_laboratorio}" data-nombre="${lab.nombre_laboratorio}" data-bs-toggle="tab" data-bs-target="#${prefix}-${lab.id_laboratorio}">
+                        ${lab.nombre_laboratorio}
                         </button>
                     </li>`;
+
                 contentContainer.innerHTML += `
                     <div class="tab-pane fade ${i === 0 ? 'show active' : ''}" id="${prefix}-${lab.id_laboratorio}">
                         <div class="row p-3" id="equipos-lab-${lab.id_laboratorio}"></div>
@@ -50,6 +51,50 @@ document.addEventListener("DOMContentLoaded", async function () {
         renderTabs(secundaria, tabsSecundaria, contentSecundaria, "secundaria");
     }
 
+    document.addEventListener("contextmenu", function (e) {
+        if (e.target.matches(".nav-link[data-id]")) {
+            e.preventDefault();
+
+            const btn = e.target;
+            const id = btn.dataset.id;
+            const nombre = btn.dataset.nombre;
+
+            // 🔥 Agrega la clase .shake y quítala después
+            btn.classList.add("shake");
+            setTimeout(() => btn.classList.remove("shake"), 500);
+
+            Swal.fire({
+                title: `¿Eliminar "${nombre}"?`,
+                text: "Esta acción no se puede deshacer",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#e3342f",
+                cancelButtonColor: "#6c757d",
+                confirmButtonText: "Sí, eliminar",
+                cancelButtonText: "Cancelar"
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch(`http://localhost:3000/api/laboratorios/${id}`, {
+                            method: "DELETE"
+                        });
+
+                        const data = await res.json();
+
+                        if (res.ok) {
+                            Swal.fire("Eliminado", data.message || "Laboratorio eliminado", "success");
+                            cargarLaboratorios();
+                        } else {
+                            Swal.fire("Error", data.message || "No se pudo eliminar", "error");
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        Swal.fire("Error", "Error al conectar con el servidor", "error");
+                    }
+                }
+            });
+        }
+    });
 
     async function cargarEquipos(idLaboratorio) {
         try {
@@ -67,25 +112,25 @@ document.addEventListener("DOMContentLoaded", async function () {
                 else if (estado === 'En proceso') estadoBadgeClass = 'bg-primary';
                 else if (estado === 'Resuelto') estadoBadgeClass = 'bg-success';
 
-                container.innerHTML += `
-                    <div class="col-md-4">
-                        <div class="card mb-3 shadow-sm">
-                            <div class="card-body text-center">
-                                <h5 class="card-title" data-id="${equipo.id_equipo}" data-numero="${equipo.numero_equipo}">
-                                    ${equipo.numero_equipo}
-                                </h5>
-                                <p class="card-text">
-                                    Estado: <span class="badge ${estadoBadgeClass}">${estado}</span>
-                                </p>
-                                <button class="btn btn-info btn-sm btnVerEquipo me-2" data-id="${equipo.id_equipo}">
-                                    Ver Reportes
-                                </button>
-                                <button class="btn btn-warning btn-sm btnEditarEquipo" data-id="${equipo.id_equipo}" data-numero="${equipo.numero_equipo}">
-                                    Editar Nombre
-                                </button>
+                    container.innerHTML += `
+                        <div class="col-md-4">
+                            <div class="card mb-3 shadow-sm">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title" data-id="${equipo.id_equipo}" data-numero="${equipo.numero_equipo}">
+                                        ${equipo.numero_equipo}
+                                    </h5>
+                                    <p class="card-text">
+                                        Estado: <span class="badge ${estadoBadgeClass}">${estado}</span>
+                                    </p>
+                                    <button class="btn btn-info btn-sm btnVerEquipo me-2" data-id="${equipo.id_equipo}">
+                                        Ver Reportes
+                                    </button>
+                                    <button class="btn btn-warning btn-sm btnEditarEquipo" data-id="${equipo.id_equipo}" data-numero="${equipo.numero_equipo}">
+                                        Editar Nombre
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    </div>`;
+                        </div>`;
             });
         } catch (error) {
             console.error(`❌ Error al obtener equipos del laboratorio ${idLaboratorio}:`, error);
@@ -121,24 +166,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                                     ${reporte.estatus}
                                 </span>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Observaciones:</label>
-                                <textarea class="form-control observaciones-reporte" rows="2" placeholder="Escribe aquí...">${reporte.observaciones || ""}</textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Estatus:</label>
-                                <select class="form-select estatus-reporte">
-                                    <option value="Pendiente" ${reporte.estatus === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                                    <option value="En proceso" ${reporte.estatus === 'En proceso' ? 'selected' : ''}>En proceso</option>
-                                    <option value="Resuelto" ${reporte.estatus === 'Resuelto' ? 'selected' : ''}>Resuelto</option>
-                                </select>
-                            </div>
-                            <div class="text-end">
-                                <button class="btn btn-success btn-sm guardar-reporte">
-                                    <i class="fas fa-save me-1"></i> Guardar cambios
-                                </button>
-                            </div>
-                        </li>
                     `;
                 });
             }
@@ -308,7 +335,53 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
+    async function cargarNotificaciones() {
+        const user = JSON.parse(localStorage.getItem("user"));
+        const res = await fetch(`/api/notificaciones/${user.id_usuario}`);
+        const notificaciones = await res.json();
+
+        const notifBox = document.querySelector(".notif-center");
+        notifBox.innerHTML = "";
+
+        if (notificaciones.length === 0) {
+            notifBox.innerHTML = `
+                <div class="text-center text-muted small py-2">No hay notificaciones nuevas</div>
+            `;
+        } else {
+            notificaciones.forEach(n => {
+                notifBox.innerHTML += `
+                    <div class="d-flex justify-content-between align-items-start position-relative notification-item ${n.leida ? 'leida' : ''}" data-id="${n.id_notificacion}">
+                        <a href="#" onclick="marcarLeida(${n.id_notificacion})" class="d-flex w-100 text-decoration-none text-dark">
+                            <div class="notif-icon notif-primary"><i class="fa fa-bell"></i></div>
+                            <div class="notif-content">
+                                <span class="block">${n.mensaje}</span>
+                                <span class="time">${new Date(n.fecha).toLocaleString()}</span>
+                            </div>
+                        </a>
+                        <button onclick="eliminarNotificacion(${n.id_notificacion})" class="btn-close btn-close-white ms-2 position-absolute top-0 end-0" style="font-size: 0.6rem;" aria-label="Close"></button>
+                    </div>
+                `;
+            });
+        }
+
+        // Mostrar solo la cantidad de notificaciones NO leídas
+        const noLeidas = notificaciones.filter(n => !n.leida);
+        document.querySelector(".notification").textContent = noLeidas.length;
+    }
+
+    // ✅ Declarar funciones globales FUERA de cargarNotificaciones
+    window.marcarLeida = async function (id) {
+        await fetch(`/api/notificaciones/${id}/leida`, { method: "PUT" });
+        cargarNotificaciones();
+    };
+
+    window.eliminarNotificacion = async function (id) {
+        await fetch(`/api/notificaciones/${id}`, { method: "DELETE" });
+        cargarNotificaciones();
+    };
 
 
+    cargarNotificaciones();
+    setInterval(cargarNotificaciones, 10000); // actualiza cada 10 segundos
     cargarLaboratorios();
 });

@@ -6,6 +6,9 @@
     <title>Reportes | Gestion de reportes </title>
     <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
     <link rel="icon" href="styles/images/logo-piaget.png" type="image/x-icon" />
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#11319E" />
+    <link rel="apple-touch-icon" href="/styles/images/logo-piaget.png">
 
 
     <!-- Fonts and icons -->
@@ -32,6 +35,7 @@
     <link rel="stylesheet" href="styles/assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="styles/assets/css/plugins.min.css" />
     <link rel="stylesheet" href="styles/assets/css/kaiadmin.min.css" />
+    <link rel="stylesheet" href="styles/assets/css/notif.css" />
     <link rel="shortcut icon" href="styles/images/logo-piaget.png" type="image/x-icon">
 </head>
 
@@ -142,21 +146,13 @@
                                 <a class="nav-link dropdown-toggle" href="#" id="notifDropdown" role="button"
                                     data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     <i class="fa fa-bell"></i>
-                                    <span class="notification">4</span>
+                                    <span class="notification"></span>
                                 </a>
                                 <ul class="dropdown-menu notif-box animated fadeIn" aria-labelledby="notifDropdown">
                                     <li>
                                         <div class="notif-scroll scrollbar-outer">
                                             <div class="notif-center">
-                                                <a href="#">
-                                                    <div class="notif-icon notif-primary">
-                                                        <i class="fa fa-user-plus"></i>
-                                                    </div>
-                                                    <div class="notif-content">
-                                                        <span class="block"> New user registered </span>
-                                                        <span class="time">5 minutes ago</span>
-                                                    </div>
-                                                </a>
+                                                <!-- AQUÍ SE CARGARÁN LAS NOTIFICACIONES DINÁMICAMENTE -->
                                             </div>
                                         </div>
                                     </li>
@@ -209,7 +205,7 @@
                                                     <th>Acciones</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
+                                            <tbody id="reportesBody">
                                                 <!-- Datos dinámicos -->
                                             </tbody>
                                         </table>
@@ -220,6 +216,47 @@
                     </div>
                 </div>
             </div>
+
+            <!-- MODAL DE DETALLES -->
+            <div class="modal fade" id="modalDetalleReporte" tabindex="-1" aria-labelledby="modalDetalleLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content shadow">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">Detalle del Reporte <span id="tituloDetalleReporte"></span></h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Descripción:</label>
+                                <p id="detalleDescripcion" class="form-control-plaintext"></p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Observaciones:</label>
+                                <textarea id="detalleObservaciones" class="form-control" rows="3"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Estatus:</label>
+                                <select id="detalleEstatus" class="form-select">
+                                    <option value="Pendiente">Pendiente</option>
+                                    <option value="En proceso">En proceso</option>
+                                    <option value="Resuelto">Resuelto</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="guardarDetalleCambios" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i> Guardar cambios
+                            </button>
+                            <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
 
             <footer class="footer">
                 <div class="container-fluid d-flex justify-content-between">
@@ -263,12 +300,14 @@
 
     <!-- Sweet Alert -->
     <script src="styles/assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Kaiadmin JS -->
     <script src="styles/assets/js/kaiadmin.min.js"></script>
 
     <!-- Script para jalar los datos del fokin reportes -->
     <script src="js/gestionReportes.js"></script>
+    <script src="js/navUser.js"></script>
 
     <script>
         $("#lineChart").sparkline([102, 109, 120, 99, 110, 105, 115], {
@@ -296,20 +335,6 @@
             lineWidth: "2",
             lineColor: "#ffa534",
             fillColor: "rgba(255, 165, 52, .14)",
-        });
-    </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const user = JSON.parse(localStorage.getItem("user"));
-            if (user) {
-                document.getElementById("userName").textContent = user.nombre;
-                document.getElementById("userBoxName").textContent = user.nombre;
-                document.getElementById("userEmail").textContent = user.correo;
-            }
-        });
-        document.getElementById("logout").addEventListener("click", function () {
-            localStorage.removeItem("user");
-            window.location.href = "login.html";
         });
     </script>
 

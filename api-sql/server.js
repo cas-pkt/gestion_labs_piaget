@@ -337,6 +337,32 @@ app.get("/api/reportes", async (req, res) => {
     }
 });
 
+app.get("/api/reportes/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input("id", sql.Int, id)
+            .query(`
+                SELECT r.*, e.numero_equipo, l.nombre_laboratorio, u.nombre AS nombre_usuario
+                FROM Reportes r
+                JOIN Equipos e ON r.id_equipo = e.id_equipo
+                JOIN Laboratorios l ON r.id_laboratorio = l.id_laboratorio
+                JOIN Usuarios u ON r.id_usuario = u.id_usuario
+                WHERE r.id_reporte = @id
+            `);
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "Reporte no encontrado" });
+        }
+
+        res.json(result.recordset[0]);
+    } catch (err) {
+        console.error("❌ Error al obtener reporte:", err);
+        res.status(500).json({ message: "Error al obtener reporte", error: err.message });
+    }
+});
+
 // Actualizar el estado de un reporte
 app.put("/api/reportes/:id", async (req, res) => {
     const { id } = req.params;
@@ -412,10 +438,21 @@ app.get("/api/historialReportes", async (req, res) => {
     try {
         let pool = await sql.connect(dbConfig);
         let result = await pool.request().query(`
-            SELECT r.id_reporte, e.numero_equipo, l.nombre_laboratorio, r.descripcion, r.fecha_hora, r.estatus, r.observaciones
+            SELECT 
+                r.id_reporte,
+                e.numero_equipo,
+                l.nombre_laboratorio,
+                r.descripcion,
+                r.fecha_hora,
+                r.estatus,
+                r.observaciones,
+                u.nombre,
+                n.nombre_nivel AS nivel_usuario
             FROM Reportes r
             INNER JOIN Equipos e ON r.id_equipo = e.id_equipo
             INNER JOIN Laboratorios l ON r.id_laboratorio = l.id_laboratorio
+            LEFT JOIN Usuarios u ON r.id_usuario = u.id_usuario
+            LEFT JOIN Niveles n ON u.id_nivel = n.id_nivel
             ORDER BY r.fecha_hora DESC
         `);
 
@@ -425,7 +462,6 @@ app.get("/api/historialReportes", async (req, res) => {
         res.status(500).json({ message: "Error al obtener historial de reportes", error: error.message });
     }
 });
-
 
 // Obtener usuarios
 app.get("/api/usuarios", async (req, res) => {
@@ -876,14 +912,17 @@ app.put("/api/laboratorios/:id", async (req, res) => {
 // Eliminar un laboratorio
 app.delete("/api/laboratorios/:id", async (req, res) => {
     try {
+        const { id } = req.params;
         let pool = await sql.connect(dbConfig);
+
         await pool.request()
-            .input("id", sql.Int, req.params.id)
+            .input("id", sql.Int, id)
             .query("DELETE FROM Laboratorios WHERE id_laboratorio = @id");
 
         res.json({ message: "Laboratorio eliminado correctamente" });
-    } catch (err) {
-        res.status(500).json({ message: "Error al eliminar laboratorio", error: err.message });
+    } catch (error) {
+        console.error("❌ Error al eliminar laboratorio:", error);
+        res.status(500).json({ message: "No se pudo eliminar", error: error.message });
     }
 });
 

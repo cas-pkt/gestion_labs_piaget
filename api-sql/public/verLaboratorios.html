@@ -31,6 +31,8 @@
     <link rel="stylesheet" href="styles/assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="styles/assets/css/plugins.min.css" />
     <link rel="stylesheet" href="styles/assets/css/kaiadmin.min.css" />
+    <link rel="stylesheet" href="styles/assets/css/notif.css" />
+    <link rel="stylesheet" href="styles/assets/css/labReportStyle.css" />
     <link rel="shortcut icon" href="styles/images/logo-piaget.png" type="image/x-icon">
 </head>
 
@@ -118,16 +120,10 @@
                                 </a>
                                 <ul class="dropdown-menu notif-box animated fadeIn" aria-labelledby="notifDropdown">
                                     <li>
-                                        <div class="notif-center">
-                                            <a href="#">
-                                                <div class="notif-icon notif-primary">
-                                                    <i class="fa fa-user-plus"></i>
-                                                </div>
-                                                <div class="notif-content">
-                                                    <span class="block"> New user registered </span>
-                                                    <span class="time">5 minutes ago</span>
-                                                </div>
-                                            </a>
+                                        <div class="notif-scroll scrollbar-outer">
+                                            <div class="notif-center">
+                                                <!-- AQUÍ SE CARGARÁN LAS NOTIFICACIONES DINÁMICAMENTE -->
+                                            </div>
                                         </div>
                                     </li>
                                 </ul>
@@ -350,6 +346,7 @@
 
         <!-- Script para jalar los datos del laboratorio -->
         <script src="js/gestionLaboratorios.js"></script>
+        <script src="js/navUser.js"></script>
 
         <script>
             $("#lineChart").sparkline([102, 109, 120, 99, 110, 105, 115], {
@@ -382,51 +379,6 @@
 
         </script>
 
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                const user = JSON.parse(localStorage.getItem("user"));
-
-                if (user) {
-                    document.getElementById("userName").textContent = user.nombre;
-                    document.getElementById("userBoxName").textContent = user.nombre;
-                    document.getElementById("userEmail").textContent = user.correo;
-                }
-            });
-
-            document.getElementById("logout").addEventListener("click", function () {
-                localStorage.removeItem("user");
-                window.location.href = "login.html";
-            });
-        </script>
-
-        <style>
-            textarea.observaciones-reporte {
-                resize: none;
-                min-width: 180px;
-            }
-
-            button.guardar-reporte {
-                white-space: nowrap;
-            }
-
-            textarea.observaciones-reporte {
-                resize: vertical;
-                min-height: 60px;
-            }
-
-            .guardar-reporte {
-                white-space: nowrap;
-            }
-
-            .list-group-item {
-                transition: box-shadow 0.2s ease;
-                background-color: #f8f9fa;
-            }
-
-            .list-group-item:hover {
-                box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15);
-            }
-        </style>
 </body>
 
 </html>

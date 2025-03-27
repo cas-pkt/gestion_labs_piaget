@@ -10,6 +10,10 @@
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 	<link rel="stylesheet" href="styles/css/style.css">
 	<link rel="icon" href="styles/images/logo-piaget.png" type="image/x-icon" />
+	<link rel="manifest" href="manifest.json">
+	<meta name="theme-color" content="#11319E" />
+	<link rel="apple-touch-icon" href="/styles/images/logo-piaget.png">
+	<meta name="theme-color" content="#11319E" />
 </head>
 
 <body>
@@ -24,7 +28,7 @@
 			</div>
 			<div class="row justify-content-center">
 				<div class="col-md-6 col-lg-5">
-					<div class="login-wrap p-4 p-md-5">
+					<div class="login-wrap p-6 p-md-5">
 						<div class="icon d-flex align-items-center justify-content-center">
 							<span class="fa fa-user-o"></span>
 						</div>
@@ -65,9 +69,53 @@
 	<script src="styles/js/popper.js"></script>
 	<script src="styles/js/bootstrap.min.js"></script>
 	<script src="styles/js/main.js"></script>
-	<!-- Use color azul #11319E 
-     En boton de iniciar sesion use verde #64C466, YANO JAJAJA-->
+	<!-- Use color azul #11319E En boton de iniciar sesion use verde #64C466, YANO JAJAJA-->
+
+	<script>
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', () => {
+				navigator.serviceWorker.register('/service-worker.js')
+					.then(reg => console.log("✅ Service Worker registrado:", reg.scope))
+					.catch(err => console.error("❌ Error al registrar Service Worker:", err));
+			});
+		}
+	</script>
+
 	<script src="js/login.js"></script>
+
+	<style>
+		.login-wrap {
+			background: #fff;
+			border-radius: 10px;
+			padding: 40px 30px 50px 30px;
+			/* más padding abajo */
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+			position: relative;
+			width: 100%;
+		}
+
+		.login-form .form-group button {
+			width: 100%;
+			font-size: 1rem;
+			font-weight: 600;
+			background-color: #11319E;
+			/* azul fuerte */
+			border: none;
+			transition: background 0.3s ease;
+		}
+
+		.login-form .form-group button:hover {
+			background-color: #0b2370;
+		}
+
+		.login-form .form-control {
+			border-radius: 6px !important;
+			border: 1px solid #ccc;
+			height: 45px;
+			font-size: 0.95rem;
+		}
+	</style>
+
 </body>
 
 </html>
