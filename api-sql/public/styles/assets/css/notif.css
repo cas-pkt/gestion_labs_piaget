@@ -69,6 +69,7 @@ h5.text-primary {
     padding: 10px;
     border-bottom: 1px solid #eaeaea;
 }
+
 .notif-center a {
     display: flex;
     align-items: flex-start;
@@ -136,3 +137,13 @@ h5.text-primary {
     border-right: 10px solid transparent;
     border-bottom: 10px solid white;
 }
+
+.avatar {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+  .card:hover {
+    background-color: #f9f9f9;
+    transition: 0.3s ease;
+  }
+  

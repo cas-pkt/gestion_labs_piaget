@@ -93,34 +93,46 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function mostrarUsuarios(lista) {
         listaUsuarios.innerHTML = "";
+    
         lista.forEach(usuario => {
             const item = document.createElement("div");
-            item.classList.add("list-group-item", "d-flex", "justify-content-between", "align-items-center");
+            item.classList.add("list-group-item", "p-3", "mb-2", "shadow-sm", "rounded", "border");
+    
             item.innerHTML = `
-    <div class="d-flex flex-column flex-md-row justify-content-between w-100 align-items-start align-items-md-center">
-        <div>
-            <h6 class="mb-1 text-primary">${usuario.nombre}</h6>
-            <p class="mb-0"><i class="fas fa-envelope text-muted"></i> ${usuario.correo}</p>
-            <p class="mb-0 text-muted small">
-                <span class="me-2"><i class="fas fa-desktop"></i> ${usuario.laboratorio || "<em>Sin asignar</em>"}</span>
-                <span class="me-2"><i class="fas fa-layer-group"></i> ${usuario.nivel || "<em>Sin asignar</em>"}</span>
-                <span><i class="fas fa-user-tag"></i> ${usuario.rol || "<em>Sin rol</em>"}</span>        
-            </p>
-        </div>
-        <div class="mt-2 mt-md-0">
-            <button class="btn btn-outline-warning btn-sm btnEditar me-2" data-id="${usuario.id_usuario}">
-                <i class="fas fa-edit"></i> Editar
-            </button>
-            <button class="btn btn-outline-danger btn-sm btnEliminar" data-id="${usuario.id_usuario}">
-                <i class="fas fa-trash"></i> Eliminar
-            </button>
-        </div>
-    </div>
-    `;
-
+                <div class="d-flex justify-content-between align-items-start flex-column flex-md-row">
+                    <div class="mb-2 mb-md-0">
+                        <h5 class="mb-1 text-primary fw-semibold">
+                            <i class="fas fa-user-circle me-2"></i>${usuario.nombre}
+                        </h5>
+                        <p class="mb-1 text-dark">
+                            <i class="fas fa-envelope me-2 text-muted"></i>${usuario.correo}
+                        </p>
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-desktop me-1"></i>${usuario.laboratorio || "Sin asignar"}
+                            </span>
+                            <span class="badge bg-info text-dark">
+                                <i class="fas fa-layer-group me-1"></i>${usuario.nivel || "Sin asignar"}
+                            </span>
+                            <span class="badge bg-primary">
+                                <i class="fas fa-user-tag me-1"></i>${usuario.rol || "Sin rol"}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="mt-3 mt-md-0 d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-warning btnEditar" data-id="${usuario.id_usuario}">
+                            <i class="fas fa-edit me-1"></i>Editar
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btnEliminar" data-id="${usuario.id_usuario}">
+                            <i class="fas fa-trash-alt me-1"></i>Eliminar
+                        </button>
+                    </div>
+                </div>
+            `;
+    
             listaUsuarios.appendChild(item);
         });
-    }
+    }    
 
     btnAgregarUsuario.addEventListener("click", () => {
         editandoUsuario = null;

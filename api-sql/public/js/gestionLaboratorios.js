@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 else if (estado === 'En proceso') estadoBadgeClass = 'bg-primary';
                 else if (estado === 'Resuelto') estadoBadgeClass = 'bg-success';
 
-                    container.innerHTML += `
+                container.innerHTML += `
                         <div class="col-md-4">
                             <div class="card mb-3 shadow-sm">
                                 <div class="card-body text-center">
@@ -139,9 +139,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     window.verEquipo = async function (idEquipo) {
+        if (!idEquipo || isNaN(idEquipo)) {
+            console.error("❌ ID de equipo no válido:", idEquipo);
+            return Swal.fire("Error", "ID de equipo no válido", "error");
+        }        
         try {
+            
             const response = await fetch(`http://localhost:3000/api/reportesPorEquipo/${idEquipo}`);
             const reportes = await response.json();
+            console.log("📦 Datos recibidos del servidor:", reportes);
 
             const lista = document.getElementById("listaReportesEquipo");
             const titulo = document.getElementById("modalEquipoTitulo");
@@ -153,20 +159,44 @@ document.addEventListener("DOMContentLoaded", async function () {
                 lista.innerHTML = `<li class="list-group-item text-muted">Este equipo no tiene reportes.</li>`;
             } else {
                 reportes.forEach(reporte => {
-                    lista.innerHTML += `
-                        <li class="list-group-item mb-4 p-3 border rounded shadow-sm" data-id="${reporte.id_reporte}">
-                            <div class="mb-2">
-                                <strong class="text-primary">${reporte.descripcion}</strong>
+                    const li = document.createElement("li");
+                    li.className = "list-group-item bg-light position-relative rounded mb-3 p-3";
+
+                    // Badge del estatus (esquina superior derecha)
+                    const estatusBadge = reporte.estatus === "Resuelto"
+                        ? `<span class="badge bg-success position-absolute top-0 end-0 m-2">Resuelto</span>`
+                        : reporte.estatus === "En proceso"
+                            ? `<span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2">En proceso</span>`
+                            : `<span class="badge bg-primary position-absolute top-0 end-0 m-2">Pendiente</span>`;
+
+                    // Badge de usuario
+                    const usuarioBadge = `
+                        <span class="badge bg-secondary me-2">
+                            <i class="fas fa-user me-1"></i>${reporte.nombre_usuario || "Desconocido"}
+                        </span>`;
+
+                    // Badge de nivel
+                    const nivelBadge = `
+                        <span class="badge bg-info text-dark">
+                            <i class="fas fa-graduation-cap me-1"></i>${reporte.nombre_nivel || "Sin nivel"}
+                        </span>`;
+
+                    li.innerHTML = `
+                        ${estatusBadge}
+                        <div class="d-flex flex-column">
+                            <div class="fw-bold text-primary mb-2" style="font-size: 1.05rem;">
+                                <i class="fas fa-comment-dots me-2"></i>${reporte.descripcion}
                             </div>
-                            <div class="mb-2 small text-muted">
+                            <div class="mb-2">
+                                ${usuarioBadge}
+                                ${nivelBadge}
+                            </div>
+                            <small class="text-muted">
                                 <i class="far fa-clock me-1"></i>${new Date(reporte.fecha_hora).toLocaleString()}
-                            </div>
-                            <div class="mb-2">
-                                <span class="badge bg-${reporte.estatus === 'Resuelto' ? 'success' : reporte.estatus === 'En proceso' ? 'warning text-dark' : 'secondary'}">
-                                    ${reporte.estatus}
-                                </span>
-                            </div>
+                            </small>
+                        </div>
                     `;
+                    lista.appendChild(li);
                 });
             }
 

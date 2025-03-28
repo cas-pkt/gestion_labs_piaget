@@ -6,6 +6,10 @@
     <title>Laboratorio | Gestión de Laboratorios</title>
     <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
     <link rel="icon" href="styles/images/logo-piaget.png" type="image/x-icon" />
+    <script src="js/auth.js"></script>
+    <script>
+        validarSesion(); // ✅ Obliga a tener sesión iniciada
+    </script>
 
     <!-- Fonts and icons -->
     <script src="styles/assets/js/plugin/webfont/webfont.min.js"></script>
@@ -378,6 +382,18 @@
 
 
         </script>
+        <style>
+            .list-group-item {
+                border: none;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+                transition: 0.2s ease;
+            }
+
+            .list-group-item:hover {
+                transform: translateY(-2px);
+                background-color: #f8f9fa;
+            }
+        </style>
 
 </body>
 

@@ -9,6 +9,11 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#11319E" />
     <link rel="apple-touch-icon" href="/styles/images/logo-piaget.png">
+    <script src="js/auth.js"></script>
+    <script>
+        validarSesion(); // ✅ Obliga a tener sesión iniciada
+    </script>
+
 
 
     <!-- Fonts and icons -->
@@ -193,20 +198,21 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
-                                        <table id="reportesTable" class="table table-striped table-hover">
-                                            <thead>
+                                        <table id="reportesTable" class="table table-hover align-middle text-center">
+                                            <thead class="table-primary">
                                                 <tr>
                                                     <th>ID</th>
                                                     <th>Equipo</th>
                                                     <th>Laboratorio</th>
+                                                    <th>Usuario</th>
                                                     <th>Descripción</th>
                                                     <th>Fecha</th>
-                                                    <th>Estado</th>
+                                                    <th>Estatus</th>
                                                     <th>Acciones</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="reportesBody">
-                                                <!-- Datos dinámicos -->
+                                                <!-- Reportes aquí -->
                                             </tbody>
                                         </table>
                                     </div>
@@ -306,7 +312,7 @@
     <script src="styles/assets/js/kaiadmin.min.js"></script>
 
     <!-- Script para jalar los datos del fokin reportes -->
-    <script src="js/gestionReportes.js"></script>
+    <script src="js/gestionReportes.js" defer></script>
     <script src="js/navUser.js"></script>
 
     <script>

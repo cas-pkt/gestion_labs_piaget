@@ -1,73 +1,62 @@
 document.addEventListener("DOMContentLoaded", async function () {
+
+    const checarModal = [
+        "modalDetalleReporte",
+        "tituloDetalleReporte",
+        "detalleDescripcion",
+        "detalleObservaciones",
+        "detalleEstatus",
+        "guardarDetalleCambios"
+    ];
+
+    const faltan = checarModal.filter(id => !document.getElementById(id));
+    if (faltan.length) {
+        console.error("❌ Faltan estos elementos del modal en el HTML:", faltan);
+    }
+
     try {
         const response = await fetch("http://localhost:3000/api/reportes");
         if (!response.ok) throw new Error("Error en la respuesta del servidor");
 
         const reportes = await response.json();
-        const tablaBody = document.querySelector("#reportesTable tbody");
+        const tablaBody = document.getElementById("reportesBody");
 
-        if (reportes.length === 0) {
-            tablaBody.innerHTML = "<tr><td colspan='7' class='text-center'>No hay reportes disponibles</td></tr>";
+        if (!Array.isArray(reportes) || reportes.length === 0) {
+            tablaBody.innerHTML = "<tr><td colspan='8' class='text-center'>No hay reportes disponibles</td></tr>";
             return;
         }
 
+        tablaBody.innerHTML = ""; // Limpiar antes de insertar
+
         reportes.forEach(reporte => {
             const fila = document.createElement("tr");
+
+            const badge = reporte.estatus === "Pendiente" ? "bg-secondary" :
+                reporte.estatus === "En proceso" ? "bg-warning text-dark" :
+                    "bg-success";
+
             fila.innerHTML = `
                 <td>${reporte.id_reporte}</td>
                 <td>${reporte.numero_equipo || "N/A"}</td>
                 <td>${reporte.nombre_laboratorio || "N/A"}</td>
-                <td>${reporte.descripcion}</td>
+                <td>${reporte.nombre_usuario || "Desconocido"}</td>
+                <td>${reporte.descripcion || "-"}</td>
                 <td>${new Date(reporte.fecha_hora).toLocaleString()}</td>
-                <td>${reporte.estatus}</td>
+                <td><span class="badge ${badge}">${reporte.estatus}</span></td>
                 <td>
-                    <button class="btn btn-primary btn-sm" onclick="verDetalleReporte(${reporte.id_reporte})"> Detalles </button>
-
+                    <button class="btn btn-primary btn-sm" onclick="verDetalleReporte(${reporte.id_reporte})">
+                        Detalles
+                    </button>
                 </td>
             `;
+
             tablaBody.appendChild(fila);
         });
 
     } catch (error) {
-        console.error("Error al cargar reportes:", error);
-    }
-
-
-    async function cargarReportes() {
-        const res = await fetch(`http://localhost:3000/api/reportes/${idReporte}`);
-        if (!res.ok) throw new Error("Reporte no encontrado");
-
-        const reportes = await res.json();
-
-        const tbody = document.getElementById("reportesBody");
-        tbody.innerHTML = "";
-
-        reportes.forEach(reporte => {
-            const row = document.createElement("tr");
-
-            row.innerHTML = `
-            <td>${reporte.id_reporte}</td>
-            <td>${reporte.numero_equipo}</td>
-            <td>${reporte.nombre_laboratorio}</td>
-            <td>${reporte.descripcion}</td>
-            <td>${new Date(reporte.fecha_hora).toLocaleString()}</td>
-            <td>
-                <select class="form-select estatus-select" data-id="${reporte.id_reporte}">
-                    <option value="Pendiente" ${reporte.estatus === "Pendiente" ? "selected" : ""}>Pendiente</option>
-                    <option value="En proceso" ${reporte.estatus === "En proceso" ? "selected" : ""}>En proceso</option>
-                    <option value="Resuelto" ${reporte.estatus === "Resuelto" ? "selected" : ""}>Resuelto</option>
-                </select>
-                <textarea class="form-control mt-1 observaciones-text" rows="2" placeholder="Observaciones..." data-id="${reporte.id_reporte}">${reporte.observaciones || ""}</textarea>
-            </td>
-            <td>
-                <button class="btn btn-success btn-sm guardar-btn" data-id="${reporte.id_reporte}"><i class="fas fa-save"></i> Guardar cambios</button>
-            </td>
-        `;
-
-            tbody.appendChild(row);
-        });
-
-        agregarEventosGuardar();
+        console.error("❌ Error al cargar reportes:", error);
+        const tablaBody = document.getElementById("reportesBody");
+        tablaBody.innerHTML = "<tr><td colspan='8' class='text-center text-danger'>Error al cargar los reportes</td></tr>";
     }
 
     function agregarEventosGuardar() {
@@ -211,22 +200,22 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (notificaciones.length === 0) {
             notifBox.innerHTML = `
-            <div class="text-center text-muted small py-2">No hay notificaciones nuevas</div>
-        `;
+                <div class="text-center text-muted small py-2">No hay notificaciones nuevas</div>
+            `;
         } else {
             notificaciones.forEach(n => {
                 notifBox.innerHTML += `
-                <div class="d-flex justify-content-between align-items-start position-relative notification-item ${n.leida ? 'leida' : ''}" data-id="${n.id_notificacion}">
-                    <a href="#" onclick="marcarLeida(${n.id_notificacion})" class="d-flex w-100 text-decoration-none text-dark">
-                        <div class="notif-icon notif-primary"><i class="fa fa-bell"></i></div>
-                        <div class="notif-content">
-                            <span class="block">${n.mensaje}</span>
-                            <span class="time">${new Date(n.fecha).toLocaleString()}</span>
-                        </div>
-                    </a>
-                    <button onclick="eliminarNotificacion(${n.id_notificacion})" class="btn-close btn-close-white ms-2 position-absolute top-0 end-0" style="font-size: 0.6rem;" aria-label="Close"></button>
-                </div>
-            `;
+                    <div class="d-flex justify-content-between align-items-start position-relative notification-item ${n.leida ? 'leida' : ''}" data-id="${n.id_notificacion}">
+                        <a href="#" onclick="marcarLeida(${n.id_notificacion})" class="d-flex w-100 text-decoration-none text-dark">
+                            <div class="notif-icon notif-primary"><i class="fa fa-bell"></i></div>
+                            <div class="notif-content">
+                                <span class="block">${n.mensaje}</span>
+                                <span class="time">${new Date(n.fecha).toLocaleString()}</span>
+                            </div>
+                        </a>
+                        <button onclick="eliminarNotificacion(${n.id_notificacion})" class="btn-close btn-close-white ms-2 position-absolute top-0 end-0" style="font-size: 0.6rem;" aria-label="Close"></button>
+                    </div>
+                `;
             });
         }
 
@@ -245,8 +234,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         await fetch(`/api/notificaciones/${id}`, { method: "DELETE" });
         cargarNotificaciones();
     };
-
-
     cargarNotificaciones();
     setInterval(cargarNotificaciones, 10000); // actualiza cada 10 segundos
 });

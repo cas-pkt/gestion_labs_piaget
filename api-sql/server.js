@@ -296,27 +296,6 @@ app.get("/reportes/:id_usuario", async (req, res) => {
 });
 
 
-//reportes por id de equipo
-app.get("/api/reportesPorEquipo/:id_equipo", async (req, res) => {
-    const { id_equipo } = req.params;
-    try {
-        const pool = await sql.connect(dbConfig);
-        const result = await pool.request()
-            .input("id_equipo", sql.Int, id_equipo)
-            .query(`
-                SELECT id_reporte, descripcion, fecha_hora, estatus, observaciones
-                FROM Reportes 
-                WHERE id_equipo = @id_equipo
-                ORDER BY fecha_hora DESC
-            `);
-
-        res.json(result.recordset);
-    } catch (err) {
-        console.error("❌ Error al obtener reportes del equipo:", err);
-        res.status(500).json({ message: "Error al obtener reportes del equipo", error: err.message });
-    }
-});
-
 
 //Main page del Admin
 app.get("/gestionReportes.html", (req, res) => {
@@ -329,20 +308,30 @@ app.get("/api/reportes", async (req, res) => {
     try {
         let pool = await sql.connect(dbConfig);
         let result = await pool.request().query(`
-            SELECT r.id_reporte, r.descripcion, r.fecha_hora, r.estatus, 
-            e.numero_equipo, l.nombre_laboratorio
+            SELECT 
+                r.id_reporte, 
+                r.descripcion, 
+                r.fecha_hora, 
+                r.estatus, 
+                e.numero_equipo, 
+                l.nombre_laboratorio,
+                u.nombre AS nombre_usuario,
+                n.nombre_nivel AS nivel_usuario
             FROM Reportes r
             INNER JOIN Equipos e ON r.id_equipo = e.id_equipo
             INNER JOIN Laboratorios l ON r.id_laboratorio = l.id_laboratorio
+            LEFT JOIN Usuarios u ON r.id_usuario = u.id_usuario
+            LEFT JOIN Niveles n ON u.id_nivel = n.id_nivel
             ORDER BY r.fecha_hora DESC
         `);
 
-        res.json(result.recordset);  // ✅ Devuelve JSON correctamente
+        res.json(result.recordset);
     } catch (error) {
         console.error("❌ Error al obtener reportes:", error);
         res.status(500).json({ message: "Error al obtener reportes", error: error.message });
     }
 });
+
 
 app.get("/api/reportes/:id", async (req, res) => {
     const { id } = req.params;
@@ -374,6 +363,10 @@ app.get("/api/reportes/:id", async (req, res) => {
 app.put("/api/reportes/:id", async (req, res) => {
     const { id } = req.params;
     const { estatus, observaciones } = req.body;
+    console.log("📥 Data recibida:", { id, estatus, observaciones });
+    if (!estatus) {
+        return res.status(400).json({ message: "El estatus es requerido" });
+    }
 
     try {
         const pool = await sql.connect(dbConfig);
@@ -382,6 +375,9 @@ app.put("/api/reportes/:id", async (req, res) => {
         const usuarioResult = await pool.request()
             .input("id", sql.Int, id)
             .query("SELECT id_usuario FROM Reportes WHERE id_reporte = @id");
+        if (!usuarioResult.recordset[0]) {
+            return res.status(404).json({ message: "Reporte no encontrado o sin usuario asignado" });
+        }
 
         const id_usuario = usuarioResult.recordset[0]?.id_usuario;
 
@@ -399,8 +395,8 @@ app.put("/api/reportes/:id", async (req, res) => {
                 .input("id_usuario", sql.Int, id_usuario)
                 .input("mensaje", sql.NVarChar, mensaje)
                 .query("INSERT INTO Notificaciones (id_usuario, mensaje) VALUES (@id_usuario, @mensaje)");
-            
-                // Enviar notificación en tiempo real al usuario afectado, IAN AGREGUE ESTO CON LA LIBRERIA DE SOCKER IO
+
+            // Enviar notificación en tiempo real al usuario afectado, IAN AGREGUE ESTO CON LA LIBRERIA DE SOCKER IO
             io.to(`usuario_${id_usuario}`).emit("notificacion", { mensaje });
         }
 
@@ -849,7 +845,6 @@ app.get("/api/laboratorios/:id/equipos", async (req, res) => {
     }
 });
 
-
 app.get("/api/reportesPorEquipo/:id_equipo", async (req, res) => {
     const { id_equipo } = req.params;
     try {
@@ -857,10 +852,19 @@ app.get("/api/reportesPorEquipo/:id_equipo", async (req, res) => {
         const result = await pool.request()
             .input("id_equipo", sql.Int, id_equipo)
             .query(`
-                SELECT id_reporte, descripcion, fecha_hora, estatus, observaciones
-                FROM Reportes 
-                WHERE id_equipo = @id_equipo
-                ORDER BY fecha_hora DESC
+                SELECT 
+                    r.id_reporte, 
+                    r.descripcion, 
+                    r.fecha_hora, 
+                    r.estatus, 
+                    r.observaciones,
+                    u.nombre AS nombre_usuario,
+                    n.nombre_nivel AS nombre_nivel
+                FROM Reportes r
+                LEFT JOIN Usuarios u ON r.id_usuario = u.id_usuario
+                LEFT JOIN Niveles n ON u.id_nivel = n.id_nivel
+                WHERE r.id_equipo = @id_equipo
+                ORDER BY r.fecha_hora DESC
             `);
 
         res.json(result.recordset);
@@ -873,7 +877,7 @@ app.get("/api/reportesPorEquipo/:id_equipo", async (req, res) => {
 app.post("/api/laboratorios", async (req, res) => {
     try {
         const { nombre_laboratorio, id_nivel } = req.body;
-
+        
         if (!nombre_laboratorio || !id_nivel) {
             return res.status(400).json({ message: "⚠️ Todos los campos son obligatorios." });
         }
