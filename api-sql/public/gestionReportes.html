@@ -165,14 +165,14 @@
                             </li>
                             <li class="nav-item topbar-user dropdown hidden-caret">
                                 <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#">
-                                    <span class="profile-username">Hi, <span id="userName">Usuario</span></span>
+                                    <span class="profile-username">Hola, <span id="userName"></span></span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-user animated fadeIn">
                                     <li>
                                         <div class="user-box">
                                             <div class="u-text">
                                                 <h4 id="userBoxName">Usuario</h4>
-                                                <p id="userEmail" class="text-muted">correo@example.com</p>
+                                                <p id="userEmail" class="text-muted"></p>
                                             </div>
                                         </div>
                                     </li>
@@ -191,30 +191,90 @@
             <div class="container">
                 <div class="page-inner">
                     <div class="row">
-                        <div class="col-md-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">Gestión de Reportes</div>
+                        <div class="container">
+                            <div class="bg-panel">
+                                <h4 class="mb-4 fw-bold">Seguimiento de Reportes</h4>
+
+                                <!-- 🎯 Filtros avanzados -->
+                                <div class="bg-light p-4 rounded shadow-sm mb-4">
+                                    <div class="row g-3 align-items-end mb-4">
+                                        <div class="col-md-2">
+                                            <label for="filtroFecha" class="form-label fw-semibold">Filtrar por
+                                                Fecha</label>
+                                            <input type="date" id="filtroFecha" class="form-control">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="filtroUsuario" class="form-label fw-semibold">Filtrar por
+                                                Usuario</label>
+                                            <select id="filtroUsuario" class="form-select">
+                                                <option value="">Todos</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="filtroLaboratorio" class="form-label fw-semibold">Filtrar por
+                                                Laboratorio</label>
+                                            <select id="filtroLaboratorio" class="form-select">
+                                                <option value="">Todos</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="filtroNivel" class="form-label fw-semibold">Filtrar por
+                                                Nivel</label>
+                                            <select id="filtroNivel" class="form-select">
+                                                <option value="">Todos</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="filtroEstatus" class="form-label fw-semibold">Filtrar por
+                                                Estatus</label>
+                                            <select id="filtroEstatus" class="form-select">
+                                                <option value="">Todos</option>
+                                                <option value="Pendiente">Pendiente</option>
+                                                <option value="En proceso">En proceso</option>
+                                                <option value="Resuelto">Resuelto</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-end">
+                                            <button id="btnLimpiarFiltros" class="btn btn-outline-secondary w-100">
+                                                <i class="fas fa-eraser me-1"></i> Limpiar filtros
+                                            </button>
+                                        </div>
+                                        <div class="col-md-6 d-flex align-items-end">
+                                            <label for="filtroTexto" class="form-label fw-semibold">Buscar por equipo o
+                                                descripción</label>
+                                            <input type="text" id="filtroTexto" class="form-control"
+                                                placeholder="Ej. PC-1, pantalla rota">
+                                        </div>
+
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table id="reportesTable" class="table table-hover align-middle text-center">
-                                            <thead class="table-primary">
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Equipo</th>
-                                                    <th>Laboratorio</th>
-                                                    <th>Usuario</th>
-                                                    <th>Descripción</th>
-                                                    <th>Fecha</th>
-                                                    <th>Estatus</th>
-                                                    <th>Acciones</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="reportesBody">
-                                                <!-- Reportes aquí -->
-                                            </tbody>
-                                        </table>
+
+                                <!-- Pestañas principales: Niveles -->
+                                <ul class="nav nav-tabs mb-3" id="nivelTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="tab-primaria" data-bs-toggle="tab"
+                                            data-bs-target="#panelPrimaria" type="button" role="tab">Primaria</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="tab-secundaria" data-bs-toggle="tab"
+                                            data-bs-target="#panelSecundaria" type="button"
+                                            role="tab">Secundaria</button>
+                                    </li>
+                                </ul>
+
+                                <!-- Contenedores de pestañas de laboratorios según nivel -->
+                                <div class="tab-content">
+
+                                    <!-- 🔹 Primaria -->
+                                    <div class="tab-pane fade show active" id="panelPrimaria" role="tabpanel">
+                                        <ul class="nav custom-tabs mb-3" id="tabsPrimaria" role="tablist"></ul>
+                                        <div class="tab-content" id="contenidoTabsPrimaria"></div>
+                                    </div>
+
+                                    <!-- 🔸 Secundaria -->
+                                    <div class="tab-pane fade" id="panelSecundaria" role="tabpanel">
+                                        <ul class="nav custom-tabs mb-3" id="tabsSecundaria" role="tablist"></ul>
+                                        <div class="tab-content" id="contenidoTabsSecundaria"></div>
                                     </div>
                                 </div>
                             </div>
@@ -262,19 +322,16 @@
                     </div>
                 </div>
             </div>
-
-
-            <footer class="footer">
-                <div class="container-fluid d-flex justify-content-between">
-                    <nav class="pull-left">
-                    </nav>
-                    <div>
-                        Instituto Piaget
-                    </div>
-                </div>
-            </footer>
         </div>
-
+        <footer class="footer">
+            <div class="container-fluid d-flex justify-content-between">
+                <nav class="pull-left">
+                </nav>
+                <div>
+                    Instituto Piaget
+                </div>
+            </div>
+        </footer>
 
     </div>
     <!--   Core JS Files   -->

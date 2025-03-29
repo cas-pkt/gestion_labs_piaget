@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const modalUsuario = new bootstrap.Modal(document.getElementById("modalUsuario"));
     const formUsuario = document.getElementById("formUsuario");
 
+
     let usuarios = [];
     let usuariosOriginales = []; // guardará todos los usuarios
     let editandoUsuario = null;
@@ -90,49 +91,68 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.getElementById(id).addEventListener("input", aplicarFiltros);
     });
 
+    function obtenerClaseNivel(nivelNombre) {
+        const niveles = {
+            "Primero Primaria": 1,
+            "Segundo Primaria": 2,
+            "Tercero Primaria": 3,
+            "Cuarto Primaria": 4,
+            "Quinto Primaria": 5,
+            "Sexto Primaria": 6,
+            "Primero Secundaria": 7,
+            "Segundo Secundaria": 8,
+            "Tercero Secundaria": 9
+        };
+
+        const id = niveles[nivelNombre];
+        return id ? `bg-custom-nivel-${id}` : "bg-secondary";
+    }
 
     function mostrarUsuarios(lista) {
         listaUsuarios.innerHTML = "";
-    
+
         lista.forEach(usuario => {
             const item = document.createElement("div");
-            item.classList.add("list-group-item", "p-3", "mb-2", "shadow-sm", "rounded", "border");
-    
+            item.classList.add("list-group-item", "p-3", "mb-3", "shadow-sm", "rounded", "border", "position-relative");
+
+            // Determinar la clase de nivel personalizada
+            const nivelClase = obtenerClaseNivel(usuario.nivel);
+
             item.innerHTML = `
-                <div class="d-flex justify-content-between align-items-start flex-column flex-md-row">
-                    <div class="mb-2 mb-md-0">
-                        <h5 class="mb-1 text-primary fw-semibold">
-                            <i class="fas fa-user-circle me-2"></i>${usuario.nombre}
-                        </h5>
-                        <p class="mb-1 text-dark">
-                            <i class="fas fa-envelope me-2 text-muted"></i>${usuario.correo}
-                        </p>
-                        <div class="d-flex flex-wrap gap-2 mt-2">
-                            <span class="badge bg-secondary">
-                                <i class="fas fa-desktop me-1"></i>${usuario.laboratorio || "Sin asignar"}
-                            </span>
-                            <span class="badge bg-info text-dark">
-                                <i class="fas fa-layer-group me-1"></i>${usuario.nivel || "Sin asignar"}
-                            </span>
-                            <span class="badge bg-primary">
-                                <i class="fas fa-user-tag me-1"></i>${usuario.rol || "Sin rol"}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="mt-3 mt-md-0 d-flex align-items-center gap-2">
-                        <button class="btn btn-sm btn-outline-warning btnEditar" data-id="${usuario.id_usuario}">
-                            <i class="fas fa-edit me-1"></i>Editar
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger btnEliminar" data-id="${usuario.id_usuario}">
-                            <i class="fas fa-trash-alt me-1"></i>Eliminar
-                        </button>
+                <!-- Botones en esquina superior derecha -->
+                <div class="position-absolute top-0 end-0 m-2">
+                    <button class="btn btn-sm btn-outline-warning me-1 btnEditar" data-id="${usuario.id_usuario}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger btnEliminar" data-id="${usuario.id_usuario}">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+    
+                <div>
+                    <h5 class="mb-1 text-primary fw-semibold">
+                        <i class="fas fa-user-circle me-2"></i>${usuario.nombre}
+                    </h5>
+                    <p class="mb-1 text-dark">
+                        <i class="fas fa-envelope me-2 text-muted"></i>${usuario.correo}
+                    </p>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <span class="badge bg-secondary">
+                            <i class="fas fa-desktop me-1"></i>${usuario.laboratorio || "Sin asignar"}
+                        </span>
+                        <span class="badge ${nivelClase} nivel-badge">
+                            <i class="fas fa-layer-group me-1"></i>${usuario.nivel || "Sin asignar"}
+                        </span>
+                        <span class="badge bg-primary">
+                            <i class="fas fa-user-tag me-1"></i>${usuario.rol || "Sin rol"}
+                        </span>
                     </div>
                 </div>
             `;
-    
+
             listaUsuarios.appendChild(item);
         });
-    }    
+    }
 
     btnAgregarUsuario.addEventListener("click", () => {
         editandoUsuario = null;
@@ -175,9 +195,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error(resJson.message || "Error desconocido");
                 }
 
-                Swal.fire("✅ Éxito", resJson.message, "success");
+                Swal.fire({
+                    icon: "success",
+                    title: "¡Usuario guardado!",
+                    text: resJson.message,
+                    showConfirmButton: false,
+                    timer: 1500,
+                    toast: true,
+                    position: "top-end"
+                });
                 modalUsuario.hide();
                 cargarUsuarios();
+                
             })
             .catch(error => {
                 console.error("❌ Error al guardar usuario:", error);
@@ -213,37 +242,60 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Evento para eliminar usuario con SweetAlert2
     listaUsuarios.addEventListener("click", async (e) => {
-        if (e.target.classList.contains("btnEliminar")) {
-            const id = e.target.dataset.id;
+    if (e.target.classList.contains("btnEliminar")) {
+        const id = e.target.dataset.id;
+        
+        const confirmacion = await Swal.fire({
+            
+            title: "¿Eliminar usuario?",
+            text: "Esta acción no se puede deshacer.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#6c757d",
+            confirmButtonText: '<i class="fas fa-trash-alt"></i> Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            customClass: {
+                popup: 'rounded-3 shadow',
+                confirmButton: 'btn btn-danger me-2',
+                cancelButton: 'btn btn-secondary me-2',
+            },
+            buttonsStyling: false
+        });
 
-            const confirmacion = await Swal.fire({
-                title: "¿Estás seguro?",
-                text: "Esta acción eliminará al usuario permanentemente.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Sí, eliminar",
-                cancelButtonText: "Cancelar"
-            });
+        if (confirmacion.isConfirmed) {
+            try {
+                const response = await fetch(`http://localhost:3000/api/usuarios/${id}`, {
+                    method: "DELETE"
+                });
+                const resultado = await response.json();
 
-            if (confirmacion.isConfirmed) {
-                try {
-                    const response = await fetch(`http://localhost:3000/api/usuarios/${id}`, {
-                        method: "DELETE"
-                    });
-                    const resultado = await response.json();
-                    if (!response.ok) {
-                        Swal.fire("Error", resultado.message, "error");
-                        return;
-                    }
-                    Swal.fire("Eliminado", resultado.message, "success");
-                    cargarUsuarios();
-                } catch (error) {
-                    console.error("❌ Error al eliminar usuario:", error);
-                    Swal.fire("Error", "Hubo un problema al eliminar el usuario", "error");
+                if (!response.ok) {
+                    Swal.fire("Error", resultado.message, "error");
+                    return;
                 }
+
+                // 🟢 Notificación tipo toast
+                Swal.fire({
+                    icon: "success",
+                    title: "Usuario eliminado",
+                    text: resultado.message,
+                    showConfirmButton: false,
+                    timer: 1500,
+                    toast: true,
+                    position: "top-end"
+                });
+
+                cargarUsuarios();
+            } catch (error) {
+                console.error("❌ Error al eliminar usuario:", error);
+                Swal.fire("Error", "Hubo un problema al eliminar el usuario", "error");
             }
         }
-    });
+    }
+});
+
 
     async function cargarRoles(rolSeleccionado = "") {
         try {
@@ -333,17 +385,33 @@ document.addEventListener("DOMContentLoaded", async function () {
         const res = await fetch(`/api/notificaciones/${user.id_usuario}`);
         const notificaciones = await res.json();
     
-        const notifBox = document.querySelector(".notif-center");
-        notifBox.innerHTML = "";
+        const reportesTab = document.getElementById("reportesTab");
+        const usuariosTab = document.getElementById("usuariosTab");
+        const notifBadge = document.querySelector(".notification");
+        const badgeReportes = document.getElementById("countReportes");
+        const badgeUsuarios = document.getElementById("countUsuarios");
+    
+        // Validación por si no existen los elementos (seguridad)
+        if (!reportesTab || !usuariosTab || !notifBadge || !badgeReportes || !badgeUsuarios) return;
+    
+        reportesTab.innerHTML = "";
+        usuariosTab.innerHTML = "";
+    
+        // Contadores
+        let noLeidasTotal = 0;
+        let noLeidasReportes = 0;
+        let noLeidasUsuarios = 0;
     
         if (notificaciones.length === 0) {
-            notifBox.innerHTML = `
-                <div class="text-center text-muted small py-2">No hay notificaciones nuevas</div>
-            `;
+            reportesTab.innerHTML = `<div class="text-center text-muted small py-2">No hay notificaciones</div>`;
+            usuariosTab.innerHTML = `<div class="text-center text-muted small py-2">No hay notificaciones</div>`;
         } else {
             notificaciones.forEach(n => {
-                notifBox.innerHTML += `
-                    <div class="d-flex justify-content-between align-items-start position-relative notification-item ${n.leida ? 'leida' : ''}" data-id="${n.id_notificacion}">
+                const tipo = n.mensaje.toLowerCase().includes("reporte") ? "reporte" : "usuario";
+                const esLeida = n.leida ? "leida" : "";
+    
+                const html = `
+                    <div class="d-flex justify-content-between align-items-start position-relative notification-item ${esLeida}" data-id="${n.id_notificacion}">
                         <a href="#" onclick="marcarLeida(${n.id_notificacion})" class="d-flex w-100 text-decoration-none text-dark">
                             <div class="notif-icon notif-primary"><i class="fa fa-bell"></i></div>
                             <div class="notif-content">
@@ -354,25 +422,36 @@ document.addEventListener("DOMContentLoaded", async function () {
                         <button onclick="eliminarNotificacion(${n.id_notificacion})" class="btn-close btn-close-white ms-2 position-absolute top-0 end-0" style="font-size: 0.6rem;" aria-label="Close"></button>
                     </div>
                 `;
+    
+                if (tipo === "reporte") {
+                    reportesTab.innerHTML += html;
+                    if (!n.leida) noLeidasReportes++;
+                } else {
+                    usuariosTab.innerHTML += html;
+                    if (!n.leida) noLeidasUsuarios++;
+                }
+    
+                if (!n.leida) noLeidasTotal++;
             });
         }
     
-        // Mostrar solo la cantidad de notificaciones NO leídas
-        const noLeidas = notificaciones.filter(n => !n.leida);
-        document.querySelector(".notification").textContent = noLeidas.length;
+        notifBadge.textContent = noLeidasTotal || "";
+        badgeReportes.textContent = noLeidasReportes || "0";
+        badgeUsuarios.textContent = noLeidasUsuarios || "0";
     }
     
+    
     // ✅ Declarar funciones globales FUERA de cargarNotificaciones
-    window.marcarLeida = async function(id) {
+    window.marcarLeida = async function (id) {
         await fetch(`/api/notificaciones/${id}/leida`, { method: "PUT" });
         cargarNotificaciones();
     };
-    
-    window.eliminarNotificacion = async function(id) {
+
+    window.eliminarNotificacion = async function (id) {
         await fetch(`/api/notificaciones/${id}`, { method: "DELETE" });
         cargarNotificaciones();
     };
-    
+
 
     cargarNotificaciones();
     setInterval(cargarNotificaciones, 10000); // actualiza cada 10 segundos

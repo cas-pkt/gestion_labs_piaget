@@ -16,7 +16,7 @@ const urlsToCache = [
     "/offline.html"
 ];
 
-// Instalar y cachear archivos
+// ✅ Instalar y cachear archivos
 self.addEventListener("install", (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -28,7 +28,7 @@ self.addEventListener("install", (event) => {
     );
 });
 
-// Activar y limpiar caché antigua
+// ✅ Activar y limpiar caché antigua
 self.addEventListener("activate", (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) =>
@@ -44,19 +44,16 @@ self.addEventListener("activate", (event) => {
     );
 });
 
-// Interceptar peticiones
-self.addEventListener("fetch", event => {
+// ✅ Interceptar peticiones
+self.addEventListener("fetch", (event) => {
     event.respondWith(
-        caches.match(event.request).then(cachedResponse => {
-            if (cachedResponse) return cachedResponse;
-
-            return fetch(event.request).catch(() => {
-                // Si es navegación (HTML) y falla, carga la offline
-                if (event.request.mode === 'navigate') {
-                    return caches.match('/offline.html');
-                }
-            });
+        fetch(event.request).catch(() => {
+            // Si es una página HTML, mostrar offline.html
+            if (event.request.headers.get("accept")?.includes("text/html")) {
+                return caches.match("/offline.html");
+            }
+            // Si no es HTML, tratar de responder desde caché (por si acaso)
+            return caches.match(event.request);
         })
     );
 });
-

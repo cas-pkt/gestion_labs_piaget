@@ -15,7 +15,18 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("userName").textContent = user.nombre;
     document.getElementById("userBoxName").textContent = user.nombre;
     document.getElementById("userEmail").textContent = user.correo;
+
+    const notifDropdown = document.getElementById("notifDropdown");
+
+        document.querySelectorAll(".dropdown-menu").forEach(dropdown => {
+            dropdown.addEventListener("click", (e) => {
+                e.stopPropagation(); // Evita que el dropdown se cierre al hacer clic dentro
+            });
+        });
+
+        
 });
+
 
 // 🔓 Cerrar sesión
 document.getElementById("logout").addEventListener("click", function () {
@@ -24,4 +35,5 @@ document.getElementById("logout").addEventListener("click", function () {
     // 🔒 Borra caché del historial y redirige
     window.location.replace("login.html");
 });
+
 

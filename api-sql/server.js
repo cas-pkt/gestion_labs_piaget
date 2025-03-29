@@ -4,6 +4,16 @@ const path = require("path");
 const sql = require("mssql");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+    host: "sandbox.smtp.mailtrap.io",
+    port: 587,
+    auth: {
+        user: "39b33e954ed129",
+        pass: "34b83cca14520f"
+    }
+});
 
 const app = express();
 app.use(cors());
@@ -18,8 +28,6 @@ app.get("/", (req, res) => {
 
 
 const PORT = process.env.PORT || 3000;
-
-
 
 // Configuración de la base de datos
 const dbConfig = {
@@ -36,8 +44,6 @@ const dbConfig = {
 sql.connect(dbConfig)
     .then(() => console.log("Conexión exitosa a SQL Server :3!"))
     .catch(err => console.error(" :( Error en la conexión a SQL Server:", err));
-
-
 
 // REGISTRAR
 app.post("/api/register", async (req, res) => {
@@ -140,6 +146,91 @@ app.post("/login", async (req, res) => {
     }
 });
 
+app.post("/api/recuperar-password", async (req, res) => {
+    const { correo } = req.body;
+
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input("correo", sql.VarChar, correo)
+            .query("SELECT id_usuario FROM Usuarios WHERE correo = @correo");
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "Correo no encontrado" });
+        }
+
+        const token = Math.random().toString(36).substring(2, 8); // Token temporal (simulado)
+        console.log(`🔐 Token para ${correo}: ${token}`);
+
+        // Guardar token en base de datos
+        await pool.request()
+            .input("id_usuario", sql.Int, id_usuario)
+            .input("token", sql.VarChar, token)
+            .query("INSERT INTO TokensRecuperacion (id_usuario, token) VALUES (@id_usuario, @token)");
+
+        await transporter.sendMail({
+            from: '"Soporte PIAGET" <soporte@piaget.com>',
+            to: correo,
+            subject: "🔐 Recuperación de contraseña",
+            html: `
+                <h3>Recuperación de contraseña</h3>
+                <p>Tu token de recuperación es:</p>
+                <h2 style="color:#11319E">${token}</h2>
+                <p>Ingresa este token en la aplicación para restablecer tu contraseña.</p>
+            `
+        });
+
+        res.json({
+            message: "Correo enviado correctamente. Revisa tu bandeja de entrada (simulado).",
+            token // Para pruebas visuales, puedes ocultarlo en producción
+        });
+
+    } catch (err) {
+        console.error("❌ Error al enviar correo:", err);
+        res.status(500).json({ message: "Error al enviar correo", error: err.message });
+    }
+});
+
+app.post("/api/reset-password", async (req, res) => {
+    const { token, nuevaPassword } = req.body;
+
+    if (!token || !nuevaPassword) {
+        return res.status(400).json({ message: "Faltan datos obligatorios." });
+    }
+
+    try {
+        const pool = await sql.connect(dbConfig);
+
+        // Buscar el token en la base de datos
+        const tokenResult = await pool.request()
+            .input("token", sql.VarChar, token)
+            .query("SELECT id_usuario FROM TokensRecuperacion WHERE token = @token");
+
+        if (tokenResult.recordset.length === 0) {
+            return res.status(404).json({ message: "Token inválido o expirado." });
+        }
+
+        const id_usuario = tokenResult.recordset[0].id_usuario;
+
+        // Actualizar la contraseña
+        await pool.request()
+            .input("id_usuario", sql.Int, id_usuario)
+            .input("nuevaPassword", sql.VarChar, nuevaPassword)
+            .query("UPDATE Usuarios SET password = @nuevaPassword WHERE id_usuario = @id_usuario");
+
+        // Eliminar el token después de usarlo
+        await pool.request()
+            .input("token", sql.VarChar, token)
+            .query("DELETE FROM TokensRecuperacion WHERE token = @token");
+
+        return res.json({ message: "Contraseña restablecida correctamente." });
+
+    } catch (err) {
+        console.error("❌ Error al restablecer:", err);
+        return res.status(500).json({ message: "Error interno", error: err.message });
+    }
+});
+
 //Crear Reportes
 app.post("/crearReporte", async (req, res) => {
     const { id_usuario, id_equipo, id_laboratorio, descripcion } = req.body;
@@ -217,6 +308,7 @@ app.post("/api/equipos", async (req, res) => {
     }
 });
 
+// ✅ Actualizar nombre de un equipo
 app.put("/api/equipos/:id", async (req, res) => {
     try {
         const { id } = req.params;
@@ -241,61 +333,6 @@ app.put("/api/equipos/:id", async (req, res) => {
         res.status(500).json({ message: "❌ Error al actualizar nombre del equipo", error: err.message });
     }
 });
-
-//obtener laboratorios para verlos en el dropdown
-
-app.get("/laboratorios", async (req, res) => {
-    try {
-        let pool = await sql.connect(dbConfig);
-        let result = await pool.request().query("SELECT id_laboratorio, nombre_laboratorio FROM Laboratorios");
-
-        res.json(result.recordset);
-    } catch (err) {
-        res.status(500).json({ message: "Error al obtener los laboratorios", error: err.message });
-    }
-});
-
-//Equipos segun el laboratorio
-app.get("/equipos/:id_laboratorio", async (req, res) => {
-    const { id_laboratorio } = req.params;
-
-    try {
-        let pool = await sql.connect(dbConfig);
-        let result = await pool.request()
-            .input("id_laboratorio", sql.Int, id_laboratorio)
-            .query("SELECT id_equipo, numero_equipo FROM Equipos WHERE id_laboratorio = @id_laboratorio");
-
-        res.json(result.recordset);
-    } catch (err) {
-        res.status(500).json({ message: "Error al obtener equipos", error: err.message });
-    }
-});
-
-// Ver reportes
-app.get("/reportes/:id_usuario", async (req, res) => {
-    const { id_usuario } = req.params;
-
-    try {
-        let pool = await sql.connect(dbConfig);
-        let result = await pool.request()
-            .input("id_usuario", sql.Int, id_usuario)
-            .query(`
-                SELECT r.id_reporte, r.descripcion, r.observaciones, r.fecha_hora, r.estatus, 
-                e.numero_equipo, l.nombre_laboratorio
-                FROM Reportes r
-                INNER JOIN Equipos e ON r.id_equipo = e.id_equipo
-                INNER JOIN Laboratorios l ON r.id_laboratorio = l.id_laboratorio
-                WHERE r.id_usuario = @id_usuario
-                ORDER BY r.fecha_hora DESC
-            `);
-
-        res.json(result.recordset);
-    } catch (error) {
-        res.status(500).json({ message: "Error al obtener reportes", error: error.message });
-    }
-});
-
-
 
 //Main page del Admin
 app.get("/gestionReportes.html", (req, res) => {
@@ -332,7 +369,7 @@ app.get("/api/reportes", async (req, res) => {
     }
 });
 
-
+// Obtener un reporte específico por ID
 app.get("/api/reportes/:id", async (req, res) => {
     const { id } = req.params;
     try {
@@ -356,6 +393,30 @@ app.get("/api/reportes/:id", async (req, res) => {
     } catch (err) {
         console.error("❌ Error al obtener reporte:", err);
         res.status(500).json({ message: "Error al obtener reporte", error: err.message });
+    }
+});
+
+// Ver reportes de un usuario específico
+app.get("/reportes/:id_usuario", async (req, res) => {
+    const { id_usuario } = req.params;
+
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("id_usuario", sql.Int, id_usuario)
+            .query(`
+                SELECT r.id_reporte, r.descripcion, r.observaciones, r.fecha_hora, r.estatus, 
+                e.numero_equipo, l.nombre_laboratorio
+                FROM Reportes r
+                INNER JOIN Equipos e ON r.id_equipo = e.id_equipo
+                INNER JOIN Laboratorios l ON r.id_laboratorio = l.id_laboratorio
+                WHERE r.id_usuario = @id_usuario
+                ORDER BY r.fecha_hora DESC
+            `);
+
+        res.json(result.recordset);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener reportes", error: error.message });
     }
 });
 
@@ -390,30 +451,35 @@ app.put("/api/reportes/:id", async (req, res) => {
 
         // Insertar notificación para el usuario
         if (id_usuario) {
-            const mensaje = `El estado de tu reporte #${id} ha sido actualizado a: ${estatus}`;
+            const mensajeEstatus = `🛠️ Tu reporte #${id} fue actualizado a: ${estatus}`;
+            const mensajeObs = observaciones ? `📌 Se agregó una nueva observación al reporte #${id}.` : "";
+
+            // Notificación por estatus
             await pool.request()
                 .input("id_usuario", sql.Int, id_usuario)
-                .input("mensaje", sql.NVarChar, mensaje)
+                .input("mensaje", sql.NVarChar, mensajeEstatus)
                 .query("INSERT INTO Notificaciones (id_usuario, mensaje) VALUES (@id_usuario, @mensaje)");
 
-            // Enviar notificación en tiempo real al usuario afectado, IAN AGREGUE ESTO CON LA LIBRERIA DE SOCKER IO
-            io.to(`usuario_${id_usuario}`).emit("notificacion", { mensaje });
+            // Notificación por observación
+            if (mensajeObs) {
+                await pool.request()
+                    .input("id_usuario", sql.Int, id_usuario)
+                    .input("mensaje", sql.NVarChar, mensajeObs)
+                    .query("INSERT INTO Notificaciones (id_usuario, mensaje) VALUES (@id_usuario, @mensaje)");
+            }
+
+            // Notificación general admin
+            await pool.request()
+                .input("id_usuario", sql.Int, 0)
+                .input("mensaje", sql.NVarChar, `📋 El reporte #${id} fue actualizado (${estatus}${mensajeObs ? " con observación" : ""})`)
+                .query("INSERT INTO Notificaciones (id_usuario, mensaje) VALUES (@id_usuario, @mensaje)");
+            res.status(200).json({ message: "Reporte actualizado correctamente" });
         }
-
-        // Notificación general para admins (usuario 0 por ejemplo)
-        await pool.request()
-            .input("id_usuario", sql.Int, 0)
-            .input("mensaje", sql.NVarChar, `Se actualizó el reporte #${id} a: ${estatus}`)
-            .query("INSERT INTO Notificaciones (id_usuario, mensaje) VALUES (@id_usuario, @mensaje)");
-
-        res.json({ message: "✅ Reporte actualizado correctamente" });
-
     } catch (error) {
         console.error("❌ Error al actualizar reporte:", error);
         res.status(500).json({ message: "❌ Error al actualizar reporte", error: error.message });
     }
 });
-
 
 // 👉 Agregar o actualizar la observación de un reporte
 app.put("/api/reportes/:id/observaciones", async (req, res) => {
@@ -438,6 +504,35 @@ app.put("/api/reportes/:id/observaciones", async (req, res) => {
     }
 });
 
+// Obtener reportes por equipo específico
+app.get("/api/reportesPorEquipo/:id_equipo", async (req, res) => {
+    const { id_equipo } = req.params;
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input("id_equipo", sql.Int, id_equipo)
+            .query(`
+                SELECT 
+                    r.id_reporte, 
+                    r.descripcion, 
+                    r.fecha_hora, 
+                    r.estatus, 
+                    r.observaciones,
+                    u.nombre AS nombre_usuario,
+                    n.nombre_nivel AS nombre_nivel
+                FROM Reportes r
+                LEFT JOIN Usuarios u ON r.id_usuario = u.id_usuario
+                LEFT JOIN Niveles n ON u.id_nivel = n.id_nivel
+                WHERE r.id_equipo = @id_equipo
+                ORDER BY r.fecha_hora DESC
+            `);
+
+        res.json(result.recordset);
+    } catch (err) {
+        console.error("❌ Error al obtener reportes del equipo:", err);
+        res.status(500).json({ message: "Error al obtener reportes del equipo", error: err.message });
+    }
+});
 
 // Historial de reportes
 app.get("/api/historialReportes", async (req, res) => {
@@ -494,6 +589,7 @@ app.get("/api/usuarios", async (req, res) => {
     }
 });
 
+// Obtener un usuario por ID
 app.get("/api/usuarios/:id", async (req, res) => {
     try {
         const { id } = req.params;
@@ -579,6 +675,13 @@ app.post("/api/usuarios", async (req, res) => {
             .input("id_rol", sql.Int, rol)
             .query("INSERT INTO UsuarioRoles (id_usuario, id_rol) VALUES (@id_usuario, @id_rol)");
 
+        // 🔔 Insertar notificación general para administradores (usuario 0)
+        await pool.request()
+            .input("id_usuario", sql.Int, 0)
+            .input("mensaje", sql.NVarChar, `👤 Se agregó un nuevo usuario: ${nombre}`)
+            .query("INSERT INTO Notificaciones (id_usuario, mensaje) VALUES (@id_usuario, @mensaje)");
+
+
         res.status(201).json({
             message: "✅ Usuario creado exitosamente",
             password_temporal: passwordTemporal
@@ -589,86 +692,6 @@ app.post("/api/usuarios", async (req, res) => {
         res.status(500).json({ message: "Error interno del servidor", error: err.message });
     }
 });
-
-// 🔔 Obtener notificaciones por usuario
-app.get("/api/notificaciones/:id_usuario", async (req, res) => {
-    const { id_usuario } = req.params;
-    try {
-        const pool = await sql.connect(dbConfig);
-        const result = await pool.request()
-            .input("id_usuario", sql.Int, id_usuario)
-            .query(`
-                SELECT id_notificacion, mensaje, fecha, leida
-                FROM Notificaciones
-                WHERE (id_usuario = @id_usuario OR id_usuario = 0)
-                ORDER BY fecha DESC
-            `);
-        res.json(result.recordset);
-    } catch (error) {
-        res.status(500).json({ message: "Error al obtener notificaciones", error: error.message });
-    }
-});
-
-app.put("/api/notificaciones/:id/leida", async (req, res) => {
-    const { id } = req.params;
-    try {
-        const pool = await sql.connect(dbConfig);
-        await pool.request()
-            .input("id", sql.Int, id)
-            .query("UPDATE Notificaciones SET leida = 1 WHERE id_notificacion = @id");
-
-        res.json({ message: "✅ Notificación marcada como leída" });
-    } catch (err) {
-        console.error("❌ Error al marcar como leída:", err);
-        res.status(500).json({ message: "Error al actualizar notificación", error: err.message });
-    }
-});
-
-
-app.delete("/api/notificaciones/:id", async (req, res) => {
-    const { id } = req.params;
-    try {
-        const pool = await sql.connect(dbConfig);
-        await pool.request()
-            .input("id", sql.Int, id)
-            .query("DELETE FROM Notificaciones WHERE id_notificacion = @id");
-
-        res.json({ message: "🗑️ Notificación eliminada correctamente" });
-    } catch (err) {
-        console.error("❌ Error al eliminar notificación:", err);
-        res.status(500).json({ message: "Error al eliminar notificación", error: err.message });
-    }
-});
-
-
-
-app.post("/api/recuperar-password", async (req, res) => {
-    const { correo } = req.body;
-
-    try {
-        const pool = await sql.connect(dbConfig);
-        const result = await pool.request()
-            .input("correo", sql.VarChar, correo)
-            .query("SELECT id_usuario FROM Usuarios WHERE correo = @correo");
-
-        if (result.recordset.length === 0) {
-            return res.status(404).json({ message: "Correo no encontrado" });
-        }
-
-        // Aquí puedes generar un token temporal (por simplicidad usamos uno fijo)
-        const token = Math.random().toString(36).substr(2, 8);
-
-        // Aquí puedes guardar el token en BD (tabla tokens_recuperacion por ejemplo)
-
-        // Simulación de envío de correo (o usar nodemailer)
-        console.log(`🔐 Token para ${correo}: ${token}`);
-
-        res.json({ message: "Correo de recuperación enviado. (simulado)" });
-    } catch (err) {
-        res.status(500).json({ message: "Error interno", error: err.message });
-    }
-});
-
 
 // Actualizar un usuario
 app.put("/api/usuarios/:id", async (req, res) => {
@@ -761,123 +784,61 @@ app.delete("/api/usuarios/:id", async (req, res) => {
     }
 });
 
-// Obtener lista de laboratorios
-app.get("/api/laboratorios", async (req, res) => {
-    try {
-        let pool = await sql.connect(dbConfig);
-        let result = await pool.request().query("SELECT id_laboratorio, nombre_laboratorio, id_nivel FROM Laboratorios");
-
-        // Asegurar que el JSON usa claves correctas
-        const laboratorios = result.recordset.map(lab => ({
-            id_laboratorio: lab.id_laboratorio,  // 👈 Ajustar el nombre de clave
-            nombre_laboratorio: lab.nombre_laboratorio,
-            id_nivel: lab.id_nivel
-        }));
-
-        res.json(laboratorios);
-    } catch (err) {
-        res.status(500).json({ message: "Error al obtener laboratorios", error: err.message });
-    }
-});
-
-// 👉 Obtener todos los laboratorios con su nivel
-app.get("/api/laboratorios", async (req, res) => {
-    try {
-        let pool = await sql.connect(dbConfig);
-        let result = await pool.request().query("SELECT id_laboratorio, nombre_laboratorio, id_nivel FROM Laboratorios");
-
-        res.json(result.recordset); // 👈 Aquí se envían los datos al frontend
-    } catch (err) {
-        console.error("❌ Error al obtener laboratorios:", err);
-        res.status(500).json({ message: "Error al obtener laboratorios", error: err.message });
-    }
-});
-
-app.get('/api/roles', async (req, res) => {
-    try {
-        let pool = await sql.connect(dbConfig);  // Aseguramos que se usa sql.connect correctamente
-        let result = await pool.request().query("SELECT id_rol, nombre_rol FROM Roles");
-
-        res.json(result.recordset);  // Devuelve la lista de roles correctamente
-    } catch (error) {
-        console.error("❌ Error al obtener roles:", error);
-        res.status(500).json({ message: "Error al obtener roles", error: error.message });
-    }
-});
-
-app.get("/api/laboratorios/:id/equipos", async (req, res) => {
-    const { id } = req.params;
-
-    if (!id || isNaN(id)) {
-        return res.status(400).json({ message: "ID de laboratorio no válido" });
-    }
-
-    try {
-        const pool = await sql.connect(dbConfig);
-
-        // Obtener todos los equipos del laboratorio
-        const equiposResult = await pool.request()
-            .input("id_laboratorio", sql.Int, id)
-            .query("SELECT id_equipo, numero_equipo FROM Equipos WHERE id_laboratorio = @id_laboratorio");
-
-        const equipos = equiposResult.recordset;
-
-        // Recorremos cada equipo y buscamos su último estado desde Reportes
-        for (let equipo of equipos) {
-            const estadoResult = await pool.request()
-                .input("id_equipo", sql.Int, equipo.id_equipo)
-                .query(`
-                    SELECT TOP 1 estatus 
-                    FROM Reportes 
-                    WHERE id_equipo = @id_equipo 
-                    ORDER BY fecha_hora DESC
-                `);
-
-            equipo.estado = estadoResult.recordset.length > 0
-                ? estadoResult.recordset[0].estatus
-                : "Sin reportes";
-        }
-
-        res.json(equipos);
-    } catch (error) {
-        console.error("❌ Error al obtener equipos con estados:", error);
-        res.status(500).json({ message: "Error al obtener equipos", error: error.message });
-    }
-});
-
-app.get("/api/reportesPorEquipo/:id_equipo", async (req, res) => {
-    const { id_equipo } = req.params;
+// 🔔 Obtener notificaciones por usuario
+app.get("/api/notificaciones/:id_usuario", async (req, res) => {
+    const { id_usuario } = req.params;
     try {
         const pool = await sql.connect(dbConfig);
         const result = await pool.request()
-            .input("id_equipo", sql.Int, id_equipo)
+            .input("id_usuario", sql.Int, id_usuario)
             .query(`
-                SELECT 
-                    r.id_reporte, 
-                    r.descripcion, 
-                    r.fecha_hora, 
-                    r.estatus, 
-                    r.observaciones,
-                    u.nombre AS nombre_usuario,
-                    n.nombre_nivel AS nombre_nivel
-                FROM Reportes r
-                LEFT JOIN Usuarios u ON r.id_usuario = u.id_usuario
-                LEFT JOIN Niveles n ON u.id_nivel = n.id_nivel
-                WHERE r.id_equipo = @id_equipo
-                ORDER BY r.fecha_hora DESC
+                SELECT id_notificacion, mensaje, fecha, leida
+                FROM Notificaciones
+                WHERE (id_usuario = @id_usuario OR id_usuario = 0)
+                ORDER BY fecha DESC
             `);
-
         res.json(result.recordset);
-    } catch (err) {
-        console.error("❌ Error al obtener reportes del equipo:", err);
-        res.status(500).json({ message: "Error al obtener reportes del equipo", error: err.message });
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener notificaciones", error: error.message });
     }
 });
 
+app.put("/api/notificaciones/:id/leida", async (req, res) => {
+    const { id } = req.params;
+    try {
+        const pool = await sql.connect(dbConfig);
+        await pool.request()
+            .input("id", sql.Int, id)
+            .query("UPDATE Notificaciones SET leida = 1 WHERE id_notificacion = @id");
+
+        res.json({ message: "✅ Notificación marcada como leída" });
+    } catch (err) {
+        console.error("❌ Error al marcar como leída:", err);
+        res.status(500).json({ message: "Error al actualizar notificación", error: err.message });
+    }
+});
+
+// Eliminar notificación
+app.delete("/api/notificaciones/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+        const pool = await sql.connect(dbConfig);
+        await pool.request()
+            .input("id", sql.Int, id)
+            .query("DELETE FROM Notificaciones WHERE id_notificacion = @id");
+
+        res.json({ message: "🗑️ Notificación eliminada correctamente" });
+    } catch (err) {
+        console.error("❌ Error al eliminar notificación:", err);
+        res.status(500).json({ message: "Error al eliminar notificación", error: err.message });
+    }
+});
+
+// Agregar un laboratorio
 app.post("/api/laboratorios", async (req, res) => {
     try {
         const { nombre_laboratorio, id_nivel } = req.body;
-        
+
         if (!nombre_laboratorio || !id_nivel) {
             return res.status(400).json({ message: "⚠️ Todos los campos son obligatorios." });
         }
@@ -923,6 +884,106 @@ app.put("/api/laboratorios/:id", async (req, res) => {
     }
 });
 
+// Obtener lista de laboratorios
+app.get("/api/laboratorios", async (req, res) => {
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request().query("SELECT id_laboratorio, nombre_laboratorio, id_nivel FROM Laboratorios");
+
+        // Asegurar que el JSON usa claves correctas
+        const laboratorios = result.recordset.map(lab => ({
+            id_laboratorio: lab.id_laboratorio,  // 👈 Ajustar el nombre de clave
+            nombre_laboratorio: lab.nombre_laboratorio,
+            id_nivel: lab.id_nivel
+        }));
+
+        res.json(laboratorios);
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener laboratorios", error: err.message });
+    }
+});
+
+// 👉 Obtener todos los laboratorios con su nivel
+app.get("/api/laboratorios", async (req, res) => {
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request().query("SELECT id_laboratorio, nombre_laboratorio, id_nivel FROM Laboratorios");
+
+        res.json(result.recordset); // 👈 Aquí se envían los datos al frontend
+    } catch (err) {
+        console.error("❌ Error al obtener laboratorios:", err);
+        res.status(500).json({ message: "Error al obtener laboratorios", error: err.message });
+    }
+});
+
+// Obtener equipos de un laboratorio específico
+app.get("/api/laboratorios/:id/equipos", async (req, res) => {
+    const { id } = req.params;
+
+    if (!id || isNaN(id)) {
+        return res.status(400).json({ message: "ID de laboratorio no válido" });
+    }
+
+    try {
+        const pool = await sql.connect(dbConfig);
+
+        // Obtener todos los equipos del laboratorio
+        const equiposResult = await pool.request()
+            .input("id_laboratorio", sql.Int, id)
+            .query("SELECT id_equipo, numero_equipo FROM Equipos WHERE id_laboratorio = @id_laboratorio");
+
+        const equipos = equiposResult.recordset;
+
+        // Recorremos cada equipo y buscamos su último estado desde Reportes
+        for (let equipo of equipos) {
+            const estadoResult = await pool.request()
+                .input("id_equipo", sql.Int, equipo.id_equipo)
+                .query(`
+                    SELECT TOP 1 estatus 
+                    FROM Reportes 
+                    WHERE id_equipo = @id_equipo 
+                    ORDER BY fecha_hora DESC
+                `);
+
+            equipo.estado = estadoResult.recordset.length > 0
+                ? estadoResult.recordset[0].estatus
+                : "Sin reportes";
+        }
+
+        res.json(equipos);
+    } catch (error) {
+        console.error("❌ Error al obtener equipos con estados:", error);
+        res.status(500).json({ message: "Error al obtener equipos", error: error.message });
+    }
+});
+
+//Equipos segun el laboratorio
+app.get("/equipos/:id_laboratorio", async (req, res) => {
+    const { id_laboratorio } = req.params;
+
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("id_laboratorio", sql.Int, id_laboratorio)
+            .query("SELECT id_equipo, numero_equipo FROM Equipos WHERE id_laboratorio = @id_laboratorio");
+
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener equipos", error: err.message });
+    }
+});
+//obtener laboratorios para verlos en el dropdown
+app.get("/laboratorios", async (req, res) => {
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request().query("SELECT id_laboratorio, nombre_laboratorio FROM Laboratorios");
+
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ message: "Error al obtener los laboratorios", error: err.message });
+    }
+});
+
 // Eliminar un laboratorio
 app.delete("/api/laboratorios/:id", async (req, res) => {
     try {
@@ -941,10 +1002,22 @@ app.delete("/api/laboratorios/:id", async (req, res) => {
 });
 
 
+
+app.get('/api/roles', async (req, res) => {
+    try {
+        let pool = await sql.connect(dbConfig);  // Aseguramos que se usa sql.connect correctamente
+        let result = await pool.request().query("SELECT id_rol, nombre_rol FROM Roles");
+
+        res.json(result.recordset);  // Devuelve la lista de roles correctamente
+    } catch (error) {
+        console.error("❌ Error al obtener roles:", error);
+        res.status(500).json({ message: "Error al obtener roles", error: error.message });
+    }
+});
+
 import("open").then((open) => {
     open.default(`http://localhost:${PORT}`);
 });
-
 
 // Iniciar el servidor
 app.listen(PORT, async () => {

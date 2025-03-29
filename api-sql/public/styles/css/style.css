@@ -8180,27 +8180,36 @@ h1, h2, h3, h4, h5,
   background-repeat: no-repeat;
   background-position: center center; }
 
-.login-wrap {
-  position: relative;
-  background: #fff;
-  border-radius: 10px;
-  -webkit-box-shadow: 0px 10px 34px -15px rgba(0, 0, 0, 0.24);
-  -moz-box-shadow: 0px 10px 34px -15px rgba(0, 0, 0, 0.24);
-  box-shadow: 0px 10px 34px -15px rgba(0, 0, 0, 0.24); }
+  .login-wrap {
+    position: relative;
+    background: #fff;
+    border-radius: 10px;
+    padding: 40px 30px 70px 30px; /* ✅ Aquí sí va el padding completo */
+    -webkit-box-shadow: 0px 10px 34px -15px rgba(0, 0, 0, 0.24);
+    -moz-box-shadow: 0px 10px 34px -15px rgba(0, 0, 0, 0.24);
+    box-shadow: 0px 10px 34px -15px rgba(0, 0, 0, 0.24);
+  }
+  
   .login-wrap h3 {
     font-weight: 700;
     font-size: 20px;
-    color: #11319E; }
+    color: #11319E;
+    margin-bottom: 20px; /* 👈 mejor usar margin para separar del contenido */
+  }
+  
   .login-wrap .icon {
     width: 80px;
     height: 80px;
     background: #11319E;
     border-radius: 50%;
     font-size: 30px;
-    margin: 0 auto;
-    margin-bottom: 10px; }
-    .login-wrap .icon span {
-      color: #fff; }
+    margin: 0 auto 10px;
+  }
+  
+  .login-wrap .icon span {
+    color: #fff;
+  }
+  
 
 .form-control {
   height: 48px;
