@@ -197,7 +197,6 @@
                     </div>
                 </div>
                 <!-- Modal para Agregar Laboratorio -->
-                <!-- Modal -->
                 <div class="modal fade" id="modalAgregarLaboratorio" tabindex="-1">
                     <div class="modal-dialog">
                         <form class="modal-content" id="formAgregarLaboratorio">
@@ -287,23 +286,33 @@
                 <div class="modal-dialog">
                     <form class="modal-content" id="formEditarEquipo">
                         <div class="modal-header">
-                            <h5 class="modal-title">Editar Nombre del Equipo</h5>
+                            <h5 class="modal-title">Editar Equipo</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                 aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <input type="hidden" id="editarIdEquipo">
+
                             <div class="mb-3">
-                                <label for="editarNumeroEquipo" class="form-label">Nuevo nombre:</label>
+                                <label for="editarNumeroEquipo" class="form-label">Nombre del equipo:</label>
                                 <input type="text" id="editarNumeroEquipo" class="form-control" required>
                             </div>
+
+                            <div class="mb-3">
+                                <label for="editarLaboratorioEquipo" class="form-label">Cambiar de laboratorio:</label>
+                                <select id="editarLaboratorioEquipo" class="form-select" required></select>
+                            </div>
                         </div>
-                        <div class="modal-footer">
+                        <div class="modal-footer d-flex justify-content-between">
+                            <button type="button" class="btn btn-danger" id="btnEliminarEquipo">
+                                <i class="fas fa-trash-alt"></i> Eliminar
+                            </button>
                             <button type="submit" class="btn btn-success">Guardar</button>
                         </div>
                     </form>
                 </div>
             </div>
+
 
 
             <footer class="footer">

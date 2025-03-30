@@ -308,29 +308,139 @@ app.post("/api/equipos", async (req, res) => {
     }
 });
 
-// ✅ Actualizar nombre de un equipo
-app.put("/api/equipos/:id", async (req, res) => {
+// ✅ Obtener todos los equipos de un laboratorio
+app.get("/api/equipos/:id", async (req, res) => {
     try {
-        const { id } = req.params;
-        const { numero_equipo } = req.body;
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input("id", sql.Int, req.params.id)
+            .query("SELECT * FROM Equipos WHERE id_equipo = @id");
 
-        if (!numero_equipo) {
-            return res.status(400).json({ message: "El nombre del equipo es obligatorio" });
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "Equipo no encontrado" });
         }
 
-        let pool = await sql.connect(dbConfig);
+        res.json(result.recordset[0]);
+    } catch (err) {
+        console.error("❌ Error al obtener equipo:", err);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+});
+
+// ✅ Actualizar un equipo y notificar a los usuarios
+app.put("/api/equipos/:id", async (req, res) => {
+    const { id } = req.params;
+    const { numero_equipo, id_laboratorio } = req.body;
+
+    if (!numero_equipo || !id_laboratorio) {
+        return res.status(400).json({ message: "Faltan datos obligatorios" });
+    }
+
+    try {
+        const pool = await sql.connect(dbConfig);
+
+        // 🧼 Actualizar el equipo
+        await pool.request()
+            .input("id", sql.Int, id)
+            .input("numero_equipo", sql.NVarChar, numero_equipo)
+            .input("id_laboratorio", sql.Int, id_laboratorio)
+            .query(`
+                UPDATE Equipos
+                SET numero_equipo = @numero_equipo,
+                    id_laboratorio = @id_laboratorio
+                WHERE id_equipo = @id
+            `);
+
+        // 🔁 Actualizar los reportes con el nuevo laboratorio
         await pool.request()
             .input("id_equipo", sql.Int, id)
-            .input("numero_equipo", sql.NVarChar, numero_equipo)
+            .input("id_laboratorio", sql.Int, id_laboratorio)
             .query(`
-                UPDATE Equipos 
-                SET numero_equipo = @numero_equipo 
+                UPDATE Reportes
+                SET id_laboratorio = @id_laboratorio
                 WHERE id_equipo = @id_equipo
             `);
 
-        res.json({ message: "✅ Nombre del equipo actualizado correctamente" });
+        // 📌 Obtener el nombre del laboratorio nuevo
+        const labNombreResult = await pool.request()
+            .input("id_laboratorio", sql.Int, id_laboratorio)
+            .query(`
+                SELECT nombre_laboratorio
+                FROM Laboratorios
+                WHERE id_laboratorio = @id_laboratorio
+            `);
+
+        const nombreLaboratorio = labNombreResult.recordset[0]?.nombre_laboratorio || "otro laboratorio";
+
+        // 📢 Obtener usuarios únicos que hayan hecho reportes sobre este equipo
+        const usuariosResult = await pool.request()
+            .input("id_equipo", sql.Int, id)
+            .query(`
+                SELECT DISTINCT id_usuario
+                FROM Reportes
+                WHERE id_equipo = @id_equipo
+            `);
+
+        const usuarios = usuariosResult.recordset;
+
+        // 📤 Enviar notificaciones a los usuarios
+        for (const u of usuarios) {
+            await pool.request()
+                .input("id_usuario", sql.Int, u.id_usuario)
+                .input("mensaje", sql.NVarChar, `📦 Tu reporte fue movido a: ${nombreLaboratorio}`)
+                .query(`
+                    INSERT INTO Notificaciones (id_usuario, mensaje)
+                    VALUES (@id_usuario, @mensaje)
+                `);
+        }
+
+        // 🧑‍💼 Notificación para admin
+        await pool.request()
+            .input("id_usuario", sql.Int, 0)
+            .input("mensaje", sql.NVarChar, `💻 El equipo #${id} fue reasignado al laboratorio: ${nombreLaboratorio}`)
+            .query(`
+                INSERT INTO Notificaciones (id_usuario, mensaje)
+                VALUES (@id_usuario, @mensaje)
+            `);
+
+        res.json({ message: "Equipo y reportes actualizados. Notificaciones enviadas." });
+
+    } catch (error) {
+        console.error("❌ Error al actualizar equipo:", error);
+        res.status(500).json({ message: "Error al actualizar el equipo", error: error.message });
+    }
+});
+
+app.delete("/api/equipos/:id", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const pool = await sql.connect(dbConfig);
+
+        await pool.request()
+            .input("id", sql.Int, id)
+            .query("DELETE FROM Equipos WHERE id_equipo = @id");
+
+        res.json({ message: "Equipo eliminado correctamente" });
+    } catch (error) {
+        console.error("❌ Error al eliminar equipo:", error);
+        res.status(500).json({ message: "Error al eliminar equipo" });
+    }
+});
+
+//Equipos segun el laboratorio
+app.get("/equipos/:id_laboratorio", async (req, res) => {
+    const { id_laboratorio } = req.params;
+
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("id_laboratorio", sql.Int, id_laboratorio)
+            .query("SELECT id_equipo, numero_equipo FROM Equipos WHERE id_laboratorio = @id_laboratorio");
+
+        res.json(result.recordset);
     } catch (err) {
-        res.status(500).json({ message: "❌ Error al actualizar nombre del equipo", error: err.message });
+        res.status(500).json({ message: "Error al obtener equipos", error: err.message });
     }
 });
 
@@ -531,6 +641,61 @@ app.get("/api/reportesPorEquipo/:id_equipo", async (req, res) => {
     } catch (err) {
         console.error("❌ Error al obtener reportes del equipo:", err);
         res.status(500).json({ message: "Error al obtener reportes del equipo", error: err.message });
+    }
+});
+
+// Eliminar un reporte
+app.delete("/api/reportes/:id", async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    console.log("🧪 Eliminando reporte con ID:", id);
+
+    try {
+        const pool = await sql.connect(dbConfig);
+
+        // 1️⃣ Obtener info del reporte antes de eliminar
+        const infoReporte = await pool.request()
+            .input("id", sql.Int, id)
+            .query(`
+                SELECT r.id_usuario, e.numero_equipo, l.nombre_laboratorio
+                FROM Reportes r
+                LEFT JOIN Equipos e ON r.id_equipo = e.id_equipo
+                LEFT JOIN Laboratorios l ON r.id_laboratorio = l.id_laboratorio
+                WHERE r.id_reporte = @id
+            `);
+
+        if (infoReporte.recordset.length === 0) {
+            return res.status(404).json({ message: "Reporte no encontrado" });
+        }
+
+        const { id_usuario, numero_equipo, nombre_laboratorio } = infoReporte.recordset[0];
+
+        // 2️⃣ Eliminar el reporte
+        const result = await pool.request()
+            .input("id_reporte", sql.Int, id)
+            .query("DELETE FROM Reportes WHERE id_reporte = @id_reporte");
+
+        // 3️⃣ Enviar notificaciones
+        const mensajeUsuario = `🗑️ Tu reporte del equipo ${numero_equipo} en ${nombre_laboratorio} fue eliminado.`;
+        const mensajeAdmin = `⚠️ El reporte #${id} del equipo ${numero_equipo} fue eliminado.`;
+
+        // Usuario
+        await pool.request()
+            .input("id_usuario", sql.Int, id_usuario)
+            .input("mensaje", sql.NVarChar, mensajeUsuario)
+            .query("INSERT INTO Notificaciones (id_usuario, mensaje) VALUES (@id_usuario, @mensaje)");
+
+        // Admin (usuario 0)
+        await pool.request()
+            .input("id_usuario", sql.Int, 0)
+            .input("mensaje", sql.NVarChar, mensajeAdmin)
+            .query("INSERT INTO Notificaciones (id_usuario, mensaje) VALUES (@id_usuario, @mensaje)");
+
+        console.log("✅ Reporte eliminado y notificaciones enviadas.");
+        res.json({ message: "Reporte eliminado correctamente y notificaciones enviadas" });
+
+    } catch (error) {
+        console.error("❌ Error al eliminar reporte:", error);
+        res.status(500).json({ message: "Error al eliminar reporte" });
     }
 });
 
@@ -884,32 +1049,17 @@ app.put("/api/laboratorios/:id", async (req, res) => {
     }
 });
 
-// Obtener lista de laboratorios
+// ✅ Obtener laboratorios con nivel JOIN
 app.get("/api/laboratorios", async (req, res) => {
     try {
         let pool = await sql.connect(dbConfig);
-        let result = await pool.request().query("SELECT id_laboratorio, nombre_laboratorio, id_nivel FROM Laboratorios");
+        let result = await pool.request().query(`
+            SELECT l.id_laboratorio, l.nombre_laboratorio, l.id_nivel, n.nombre_nivel
+            FROM Laboratorios l
+            JOIN Niveles n ON l.id_nivel = n.id_nivel
+        `);
 
-        // Asegurar que el JSON usa claves correctas
-        const laboratorios = result.recordset.map(lab => ({
-            id_laboratorio: lab.id_laboratorio,  // 👈 Ajustar el nombre de clave
-            nombre_laboratorio: lab.nombre_laboratorio,
-            id_nivel: lab.id_nivel
-        }));
-
-        res.json(laboratorios);
-    } catch (err) {
-        res.status(500).json({ message: "Error al obtener laboratorios", error: err.message });
-    }
-});
-
-// 👉 Obtener todos los laboratorios con su nivel
-app.get("/api/laboratorios", async (req, res) => {
-    try {
-        let pool = await sql.connect(dbConfig);
-        let result = await pool.request().query("SELECT id_laboratorio, nombre_laboratorio, id_nivel FROM Laboratorios");
-
-        res.json(result.recordset); // 👈 Aquí se envían los datos al frontend
+        res.json(result.recordset);
     } catch (err) {
         console.error("❌ Error al obtener laboratorios:", err);
         res.status(500).json({ message: "Error al obtener laboratorios", error: err.message });
@@ -957,21 +1107,6 @@ app.get("/api/laboratorios/:id/equipos", async (req, res) => {
     }
 });
 
-//Equipos segun el laboratorio
-app.get("/equipos/:id_laboratorio", async (req, res) => {
-    const { id_laboratorio } = req.params;
-
-    try {
-        let pool = await sql.connect(dbConfig);
-        let result = await pool.request()
-            .input("id_laboratorio", sql.Int, id_laboratorio)
-            .query("SELECT id_equipo, numero_equipo FROM Equipos WHERE id_laboratorio = @id_laboratorio");
-
-        res.json(result.recordset);
-    } catch (err) {
-        res.status(500).json({ message: "Error al obtener equipos", error: err.message });
-    }
-});
 //obtener laboratorios para verlos en el dropdown
 app.get("/laboratorios", async (req, res) => {
     try {
@@ -984,24 +1119,58 @@ app.get("/laboratorios", async (req, res) => {
     }
 });
 
-// Eliminar un laboratorio
-app.delete("/api/laboratorios/:id", async (req, res) => {
+app.delete('/api/laboratorios/:id', async (req, res) => {
+    const { id } = req.params;
+
     try {
-        const { id } = req.params;
-        let pool = await sql.connect(dbConfig);
+        const pool = await sql.connect(dbConfig);
+        const transaction = new sql.Transaction(pool);
 
-        await pool.request()
-            .input("id", sql.Int, id)
-            .query("DELETE FROM Laboratorios WHERE id_laboratorio = @id");
+        await transaction.begin();
 
-        res.json({ message: "Laboratorio eliminado correctamente" });
+        const request = new sql.Request(transaction);
+
+        // 1. Eliminar reportes de los equipos del laboratorio
+        await request.query(`
+            DELETE FROM Reportes
+            WHERE id_equipo IN (
+                SELECT id_equipo FROM Equipos WHERE id_laboratorio = ${id}
+            )
+        `);
+
+        // 2. Eliminar los equipos del laboratorio
+        await request.query(`
+            DELETE FROM Equipos WHERE id_laboratorio = ${id}
+        `);
+
+        // 3. Eliminar los usuarios del laboratorio
+        await request.query(`
+            DELETE FROM Usuarios WHERE id_laboratorio = ${id}
+        `);
+
+        // 4. Eliminar el laboratorio
+        await request.query(`
+            DELETE FROM Laboratorios WHERE id_laboratorio = ${id}
+        `);
+
+        await transaction.commit();
+
+        res.json({ message: "✅ Laboratorio y sus datos asociados fueron eliminados correctamente." });
+
     } catch (error) {
-        console.error("❌ Error al eliminar laboratorio:", error);
-        res.status(500).json({ message: "No se pudo eliminar", error: error.message });
+        console.error("❌ Error al eliminar laboratorio con sus dependencias:", error);
+
+        // Si hay una transacción activa, hacer rollback
+        if (transaction && !transaction._aborted) {
+            await transaction.rollback();
+        }
+
+        res.status(500).json({
+            message: "Error al eliminar el laboratorio y sus elementos relacionados.",
+            error: error.message,
+        });
     }
 });
-
-
 
 app.get('/api/roles', async (req, res) => {
     try {
@@ -1014,6 +1183,18 @@ app.get('/api/roles', async (req, res) => {
         res.status(500).json({ message: "Error al obtener roles", error: error.message });
     }
 });
+
+app.get("/api/niveles", async (req, res) => {
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request().query(`SELECT id_nivel, nombre_nivel FROM Niveles`);
+        res.json(result.recordset);
+    } catch (err) {
+        console.error("❌ Error al obtener niveles:", err);
+        res.status(500).json({ message: "Error al obtener niveles", error: err.message });
+    }
+});
+
 
 import("open").then((open) => {
     open.default(`http://localhost:${PORT}`);

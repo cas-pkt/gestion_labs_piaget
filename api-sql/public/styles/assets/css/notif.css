@@ -151,52 +151,52 @@
     .nivel-badge {
         color: white;
     }
-
-    .bg-custom-nivel-1 {
-        background-color: #ff9999;
-    }
-
+    
+    /* Colores personalizados para los niveles */
     /* 1ro */
-    .bg-custom-nivel-2 {
-        background-color: #a3d5ff;
+    .bg-custom-nivel-1 {
+        background-color: #e82121;
     }
 
     /* 2do */
-    .bg-custom-nivel-3 {
-        background-color: #ffd580;
+    .bg-custom-nivel-2 {
+        background-color: #70bdfd;
     }
 
     /* 3ro */
-    .bg-custom-nivel-4 {
-        background-color: #8be2a1;
+    .bg-custom-nivel-3 {
+        background-color: #f7bc6a;
     }
 
     /* 4to */
-    .bg-custom-nivel-5 {
-        background-color: #80bfff;
+    .bg-custom-nivel-4 {
+        background-color: #5ebd54;
     }
 
     /* 5to */
+    .bg-custom-nivel-5 {
+        background-color: hsl(210, 100%, 67%);
+    }
+
+    /* 6to */
     .bg-custom-nivel-6 {
         background-color: #c299ff;
     }
 
-    /* 6to */
-    .bg-custom-nivel-7 {
-        background-color: #b3ffcc;
-    }
-
     /* 1ro secundaria */
-    .bg-custom-nivel-8 {
-        background-color: #ffaacc;
+    .bg-custom-nivel-7 {
+        background-color: #a19f10;
     }
 
     /* 2do secundaria */
-    .bg-custom-nivel-9 {
-        background-color: #ffcc99;
+    .bg-custom-nivel-8 {
+        background-color: #ea4989;
     }
 
     /* 3ro secundaria */
+    .bg-custom-nivel-9 {
+        background-color: #f6a24e;
+    }
 
     .modal-content {
         border-radius: 1rem;

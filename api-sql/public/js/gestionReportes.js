@@ -1,5 +1,23 @@
 document.addEventListener("DOMContentLoaded", async function () {
+    let mapaLaboratorios = {}; // id_laboratorio => { nombre_laboratorio, nombre_nivel }
 
+    async function cargarLaboratorios() {
+        try {
+            const res = await fetch("http://localhost:3000/api/laboratorios");
+            const labs = await res.json();
+
+            mapaLaboratorios = {};
+            labs.forEach(lab => {
+                mapaLaboratorios[lab.nombre_laboratorio] = {
+                    id: lab.id_laboratorio,
+                    nivel: lab.nombre_nivel
+                };
+            });
+
+        } catch (err) {
+            console.error("❌ Error al cargar laboratorios:", err);
+        }
+    }
 
     const checarModal = [
         "modalDetalleReporte",
@@ -45,10 +63,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-
     // 🔄 Función principal para mostrar los reportes agrupados por laboratorio
     function renderizarReportes() {
-        // 🔍 Filtros actuales
         const texto = filtroTexto.value.trim().toLowerCase();
         const estatus = filtroEstatus.value;
         const fecha = filtroFecha.value;
@@ -56,7 +72,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         const laboratorio = document.getElementById("filtroLaboratorio").value;
         const nivel = document.getElementById("filtroNivel").value;
 
-        // 🧪 Contenedores del DOM
         const tabsPrimaria = document.getElementById("tabsPrimaria");
         const contenidoPrimaria = document.getElementById("contenidoTabsPrimaria");
         const tabsSecundaria = document.getElementById("tabsSecundaria");
@@ -67,14 +82,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        // 🧹 Limpiar contenido previo
+        // Limpiar contenido
         tabsPrimaria.innerHTML = "";
         contenidoPrimaria.innerHTML = "";
         tabsSecundaria.innerHTML = "";
         contenidoSecundaria.innerHTML = "";
 
-        // 🔄 Agrupar reportes por laboratorio
-        const laboratorios = {};
+        // Agrupar reportes por laboratorio
+        const laboratoriosConReportes = {};
         todosLosReportes.forEach(reporte => {
             if (
                 (texto && !(
@@ -89,72 +104,78 @@ document.addEventListener("DOMContentLoaded", async function () {
                 (estatus && reporte.estatus !== estatus)
             ) return;
 
-            if (!laboratorios[reporte.nombre_laboratorio]) {
-                laboratorios[reporte.nombre_laboratorio] = [];
+            if (!laboratoriosConReportes[reporte.nombre_laboratorio]) {
+                laboratoriosConReportes[reporte.nombre_laboratorio] = [];
             }
-            laboratorios[reporte.nombre_laboratorio].push(reporte);
+            laboratoriosConReportes[reporte.nombre_laboratorio].push(reporte);
         });
 
-        // Separar laboratorios por nivel
-        const labsPrimaria = [];
-        const labsSecundaria = [];
+        // Crear estructura de TODOS los laboratorios (con y sin reportes)
+        const primariaLabs = [];
+        const secundariaLabs = [];
 
-        const nivelesLaboratorios = {
-            Primaria: [],
-            Secundaria: []
-        };
+        Object.entries(mapaLaboratorios).forEach(([nombreLab, info]) => {
+            const reportes = laboratoriosConReportes[nombreLab] || [];
 
-        const primariaLabs = ["Reading lab", "Tynker"];
-        const secundariaLabs = ["Lab1", "Lab2"];
+            const labObj = {
+                nombre: nombreLab,
+                nivel: info.nivel,
+                reportes
+            };
 
-        Object.keys(laboratorios).forEach(nombreLab => {
-            if (primariaLabs.includes(nombreLab)) {
-                nivelesLaboratorios.Primaria.push(nombreLab);
-            } else if (secundariaLabs.includes(nombreLab)) {
-                nivelesLaboratorios.Secundaria.push(nombreLab);
+            if (info.nivel.toLowerCase().includes("primaria")) {
+                primariaLabs.push(labObj);
+            } else if (info.nivel.toLowerCase().includes("secundaria")) {
+                secundariaLabs.push(labObj);
             }
         });
 
-        // Función para renderizar pestañas y contenido
-        ["Primaria", "Secundaria"].forEach(nivel => {
-            const tabsNivel = document.getElementById(`tabs${nivel}`);
-            const contenidoNivel = document.getElementById(`contenidoTabs${nivel}`);
+        renderTabsReportes(primariaLabs, tabsPrimaria, contenidoPrimaria, "Primaria");
+        renderTabsReportes(secundariaLabs, tabsSecundaria, contenidoSecundaria, "Secundaria");
+    }
 
-            if (!tabsNivel || !contenidoNivel) return;
+    function renderTabsReportes(labs, tabsContainer, contentContainer, nivelNombre) {
+        labs.sort((a, b) => a.nombre.localeCompare(b.nombre)); // Ordenar alfabéticamente
 
-            tabsNivel.innerHTML = "";
-            contenidoNivel.innerHTML = "";
+        labs.forEach((lab, index) => {
+            const tabId = `lab-${nivelNombre}-${index}`;
 
-            nivelesLaboratorios[nivel].forEach((lab, index) => {
-                const tabId = `lab-${nivel}-${index}`;
+            // Crear tab
+            const tab = document.createElement("li");
+            tab.className = "nav-item";
+            tab.innerHTML = `
+                <button class="nav-link ${index === 0 ? "active" : ""}" 
+                    id="${tabId}-tab"
+                    data-bs-toggle="pill" 
+                    data-bs-target="#${tabId}" 
+                    type="button" 
+                    role="tab">
+                    ${lab.nombre}
+                </button>`;
+            tabsContainer.appendChild(tab);
 
-                // Crear tab
-                const tab = document.createElement("li");
-                tab.className = "nav-item";
-                tab.innerHTML = `
-                    <button class="nav-link ${index === 0 ? "active" : ""}" id="${tabId}-tab"
-                        data-bs-toggle="pill" data-bs-target="#${tabId}" type="button" role="tab">
-                        ${lab}
-                    </button>`;
-                tabsNivel.appendChild(tab);
+            // Crear contenido
+            const tabContent = document.createElement("div");
+            tabContent.className = `tab-pane fade ${index === 0 ? "show active" : ""}`;
+            tabContent.id = tabId;
+            tabContent.role = "tabpanel";
 
-                // Crear contenido del tab
-                const tabContent = document.createElement("div");
-                tabContent.className = `tab-pane fade ${index === 0 ? "show active" : ""}`;
-                tabContent.id = tabId;
-                tabContent.role = "tabpanel";
+            const row = document.createElement("div");
+            row.className = "row";
 
-                const row = document.createElement("div");
-                row.className = "row";
+            if (lab.reportes.length === 0) {
+                row.innerHTML = `<div class="col-12 text-center text-muted py-3">No hay reportes en este laboratorio</div>`;
+            } else {
+                lab.reportes
+                    .sort((a, b) => a.numero_equipo.localeCompare(b.numero_equipo))
+                    .forEach(reporte => {
+                        const badge = reporte.estatus === "Pendiente" ? "bg-secondary" :
+                            reporte.estatus === "En proceso" ? "bg-warning text-dark" :
+                                "bg-success text-white";
 
-                laboratorios[lab].forEach(reporte => {
-                    const badge = reporte.estatus === "Pendiente" ? "bg-secondary" :
-                        reporte.estatus === "En proceso" ? "bg-warning text-dark" :
-                            "bg-success text-white";
-
-                    const card = document.createElement("div");
-                    card.className = "col-md-6 col-lg-4 mb-4";
-                    card.innerHTML = `
+                        const card = document.createElement("div");
+                        card.className = "col-md-6 col-lg-4 mb-4";
+                        card.innerHTML = `
                         <div class="card shadow-sm border-start border-4 border-primary h-100">
                             <div class="card-body">
                                 <h5 class="card-title mb-1 fw-bold">${reporte.numero_equipo}</h5>
@@ -168,12 +189,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                                 </button>
                             </div>
                         </div>`;
-                    row.appendChild(card);
-                });
+                        row.appendChild(card);
+                    });
+            }
 
-                tabContent.appendChild(row);
-                contenidoNivel.appendChild(tabContent);
-            });
+            tabContent.appendChild(row);
+            contentContainer.appendChild(tabContent);
+        });
+
+        // 🔍 Consola para ver pestañas
+        console.log(`📘 Tabs ${nivelNombre}:`);
+        [...tabsContainer.querySelectorAll("button")].forEach(btn => {
+            console.log(" -", btn.textContent.trim());
         });
     }
 
@@ -252,6 +279,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const obs = document.getElementById("detalleObservaciones");
             const estatus = document.getElementById("detalleEstatus");
             const btnGuardar = document.getElementById("guardarDetalleCambios");
+            const btnEliminar = document.getElementById("eliminarReporte");
 
             if (!titulo || !desc || !obs || !estatus || !btnGuardar) {
                 console.error("❌ Faltan elementos del modal en el HTML");
@@ -269,6 +297,49 @@ document.addEventListener("DOMContentLoaded", async function () {
             obs.disabled = estaResuelto;
             estatus.disabled = estaResuelto;
             btnGuardar.style.display = estaResuelto ? "none" : "inline-block";
+
+            btnEliminar.onclick = async () => {
+                Swal.fire({
+                    title: "¿Eliminar reporte?",
+                    text: "Esta acción no se puede deshacer",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#d33",
+                    confirmButtonText: "Sí, eliminar",
+                    cancelButtonText: "Cancelar"
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            const res = await fetch(`http://localhost:3000/api/reportes/${idReporte}`, {
+                                method: "DELETE"
+                            });
+                            let result;
+                            try {
+                                result = await res.json();
+                            } catch (jsonError) {
+                                console.error("❌ La respuesta no es JSON:", jsonError);
+                                Swal.fire("❌ Error", "La respuesta del servidor no es válida", "error");
+                                return;
+                            }
+
+
+                            if (res.ok) {
+                                Swal.fire("✅ Eliminado", result.message || "Reporte eliminado correctamente", "success").then(() => {
+                                    const modalElement = document.getElementById("modalDetalleReporte");
+                                    const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                                    modalInstance.hide();
+                                    cargarReportes(); // refrescar la lista
+                                });
+                            } else {
+                                throw new Error(result.message || "No se pudo eliminar el reporte");
+                            }
+                        } catch (err) {
+                            console.error("❌ Error al eliminar:", err);
+                            Swal.fire("❌ Error", err.message, "error");
+                        }
+                    }
+                });
+            };
 
             // Guardar cambios
             btnGuardar.onclick = async () => {
@@ -296,7 +367,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const result = await updateRes.json();
                     console.log("📥 Respuesta del servidor:", result); // <-- Agrega esto por ahora
                     if (!updateRes.ok) throw new Error(result.message);
-                    
+
                     console.log("✅ Todo bien, mostrando Swal...");
                     Swal.fire({
                         icon: "success",
@@ -315,7 +386,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     Swal.fire("❌ Error", err.message, "error");
                 }
             };
-
 
             // Mostrar modal
             const modal = new bootstrap.Modal(document.getElementById("modalDetalleReporte"));
@@ -415,6 +485,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         cargarNotificaciones();
     };
 
+    await cargarLaboratorios();
     await cargarReportes(); // Cargar reportes al inicio
     agregarEventosGuardar();
     cargarNotificaciones();

@@ -11,7 +11,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
-
     async function cargarLaboratorios() {
         const response = await fetch("http://localhost:3000/api/laboratorios");
         const laboratorios = await response.json();
@@ -21,29 +20,42 @@ document.addEventListener("DOMContentLoaded", async function () {
         const tabsSecundaria = document.getElementById("laboratorioTabsSecundaria");
         const contentSecundaria = document.getElementById("laboratorioContentSecundaria");
 
+        // Limpiar contenedores
         tabsPrimaria.innerHTML = "";
         contentPrimaria.innerHTML = "";
         tabsSecundaria.innerHTML = "";
         contentSecundaria.innerHTML = "";
 
-        const primaria = laboratorios.filter(l => l.id_nivel >= 1 && l.id_nivel <= 6);
-        const secundaria = laboratorios.filter(l => l.id_nivel >= 7 && l.id_nivel <= 9);
+        console.log("Laboratorios cargados:", laboratorios);
+
+        // Ordenar laboratorios por nombre alfabéticamente
+        laboratorios.sort((a, b) => a.nombre_laboratorio.localeCompare(b.nombre_laboratorio));
+
+        // Asegurar que se asignen correctamente a Primaria y Secundaria
+        const primaria = laboratorios.filter(l => /primaria/i.test(l.nombre_nivel));
+        const secundaria = laboratorios.filter(l => /secundaria/i.test(l.nombre_nivel));
 
 
         function renderTabs(labs, tabsContainer, contentContainer, prefix) {
             labs.forEach((lab, i) => {
                 tabsContainer.innerHTML += `
                     <li class="nav-item">
-                        <button class="nav-link ${i === 0 ? 'active' : ''}" data-id="${lab.id_laboratorio}" data-nombre="${lab.nombre_laboratorio}" data-bs-toggle="tab" data-bs-target="#${prefix}-${lab.id_laboratorio}">
-                        ${lab.nombre_laboratorio}
+                        <button class="nav-link ${i === 0 ? 'active' : ''}" 
+                            data-id="${lab.id_laboratorio}" 
+                            data-nombre="${lab.nombre_laboratorio}" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#${prefix}-${lab.id_laboratorio}">
+                            ${lab.nombre_laboratorio}
                         </button>
                     </li>`;
 
                 contentContainer.innerHTML += `
-                    <div class="tab-pane fade ${i === 0 ? 'show active' : ''}" id="${prefix}-${lab.id_laboratorio}">
+                    <div class="tab-pane fade ${i === 0 ? 'show active' : ''}" 
+                        id="${prefix}-${lab.id_laboratorio}">
                         <div class="row p-3" id="equipos-lab-${lab.id_laboratorio}"></div>
                     </div>`;
-                cargarEquipos(lab.id_laboratorio);
+
+                cargarEquipos(lab.id_laboratorio); // Carga equipos por laboratorio
             });
         }
 
@@ -104,6 +116,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!container) return;
 
             container.innerHTML = "";
+
+            // Ordenar equipos por número_equipo
+            equipos.sort((a, b) => a.numero_equipo.localeCompare(b.numero_equipo, undefined, { numeric: true }));
+
             equipos.forEach(equipo => {
                 const estado = equipo.estado || 'Desconocido';
                 let estadoBadgeClass = 'bg-secondary';
@@ -113,38 +129,39 @@ document.addEventListener("DOMContentLoaded", async function () {
                 else if (estado === 'Resuelto') estadoBadgeClass = 'bg-success';
 
                 container.innerHTML += `
-                        <div class="col-md-4">
-                            <div class="card mb-3 shadow-sm">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title" data-id="${equipo.id_equipo}" data-numero="${equipo.numero_equipo}">
-                                        ${equipo.numero_equipo}
-                                    </h5>
-                                    <p class="card-text">
-                                        Estado: <span class="badge ${estadoBadgeClass}">${estado}</span>
-                                    </p>
-                                    <button class="btn btn-info btn-sm btnVerEquipo me-2" data-id="${equipo.id_equipo}">
-                                        Ver Reportes
-                                    </button>
-                                    <button class="btn btn-warning btn-sm btnEditarEquipo" data-id="${equipo.id_equipo}" data-numero="${equipo.numero_equipo}">
-                                        Editar Nombre
-                                    </button>
-                                </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">${equipo.numero_equipo}</h5>
+                                <p class="card-text">
+                                    Estado: <span class="badge ${estadoBadgeClass}">${estado}</span>
+                                </p>
+                                <button class="btn btn-info btn-sm btnVerEquipo me-2" data-id="${equipo.id_equipo}">
+                                    Ver Reportes
+                                </button>
+                                <button class="btn btn-warning btn-sm btnEditarEquipo" 
+                                    data-id="${equipo.id_equipo}" 
+                                    data-numero="${equipo.numero_equipo}">
+                                    Editar Equipo
+                                </button>
                             </div>
-                        </div>`;
+                        </div>
+                    </div>`;
             });
+
         } catch (error) {
             console.error(`❌ Error al obtener equipos del laboratorio ${idLaboratorio}:`, error);
+            Swal.fire("Error", "No se pudieron cargar los equipos", "error");
         }
     }
-
 
     window.verEquipo = async function (idEquipo) {
         if (!idEquipo || isNaN(idEquipo)) {
             console.error("❌ ID de equipo no válido:", idEquipo);
             return Swal.fire("Error", "ID de equipo no válido", "error");
-        }        
+        }
         try {
-            
+
             const response = await fetch(`http://localhost:3000/api/reportesPorEquipo/${idEquipo}`);
             const reportes = await response.json();
             console.log("📦 Datos recibidos del servidor:", reportes);
@@ -209,22 +226,61 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     };
 
-    document.getElementById("btnAgregarEquipo").addEventListener("click", async () => {
-        const select = document.getElementById("laboratorioEquipo");
-        select.innerHTML = "";
+    document.getElementById("btnAgregarLaboratorio").addEventListener("click", async () => {
+        const selectNivel = document.getElementById("nivelLaboratorio");
+        selectNivel.innerHTML = `<option value="">Seleccione</option>`; // Limpiar y agregar placeholder
 
-        const res = await fetch("http://localhost:3000/api/laboratorios");
-        const laboratorios = await res.json();
+        try {
+            const res = await fetch("http://localhost:3000/api/niveles");
+            const niveles = await res.json();
 
-        laboratorios.forEach(lab => {
-            const option = document.createElement("option");
-            option.value = lab.id_laboratorio;
-            option.textContent = lab.nombre_laboratorio;
-            select.appendChild(option);
+            niveles.forEach(nivel => {
+                const option = document.createElement("option");
+                option.value = nivel.id_nivel;
+                option.textContent = nivel.nombre_nivel;
+                selectNivel.appendChild(option);
+            });
+
+            const modal = new bootstrap.Modal(document.getElementById("modalAgregarLaboratorio"));
+            modal.show();
+        } catch (error) {
+            console.error("❌ Error al cargar niveles:", error);
+            Swal.fire("Error", "No se pudieron cargar los niveles. Intenta de nuevo.", "error");
+        }
+    });
+
+
+    document.getElementById("formAgregarLaboratorio").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const nombre = document.getElementById("nombreLaboratorio").value.trim();
+        const nivel = document.getElementById("nivelLaboratorio").value;
+
+        if (!nombre || !nivel) {
+            return Swal.fire("⚠️ Faltan datos", "Por favor completa todos los campos", "warning");
+        }
+
+        const res = await fetch("http://localhost:3000/api/laboratorios", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nombre_laboratorio: nombre, id_nivel: parseInt(nivel) })
         });
 
-        const modal = new bootstrap.Modal(document.getElementById("modalAgregarEquipo"));
-        modal.show();
+        const data = await res.json();
+
+        if (res.ok) {
+            Swal.fire("✅ Éxito", "Laboratorio agregado correctamente", "success");
+            bootstrap.Modal.getInstance(document.getElementById("modalAgregarLaboratorio")).hide();
+            document.getElementById("formAgregarLaboratorio").reset(); // Solo se limpia aquí
+            cargarLaboratorios();
+        } else {
+            Swal.fire({
+                icon: "error",
+                title: "❌ Error al agregar laboratorio",
+                text: data.message || "Ocurrió un problema al intentar agregar el laboratorio. Intenta nuevamente.",
+                confirmButtonText: "OK"
+            });
+        }
     });
 
     document.getElementById("formAgregarEquipo").addEventListener("submit", async function (e) {
@@ -255,16 +311,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const id = document.getElementById("editarIdEquipo").value;
         const nuevoNombre = document.getElementById("editarNumeroEquipo").value.trim();
+        const nuevoLaboratorio = document.getElementById("editarLaboratorioEquipo").value;
 
-        if (!nuevoNombre) {
-            return Swal.fire("⚠️", "El nombre del equipo no puede estar vacío", "warning");
+        if (!nuevoNombre || !nuevoLaboratorio) {
+            return Swal.fire("⚠️", "Todos los campos son obligatorios", "warning");
         }
 
         try {
             const response = await fetch(`http://localhost:3000/api/equipos/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ numero_equipo: nuevoNombre })
+                body: JSON.stringify({ numero_equipo: nuevoNombre, id_laboratorio: nuevoLaboratorio })
             });
 
             const result = await response.json();
@@ -272,7 +329,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (response.ok) {
                 Swal.fire("✅ Éxito", result.message, "success");
                 bootstrap.Modal.getInstance(document.getElementById("modalEditarEquipo")).hide();
-                cargarLaboratorios(); // refresca la vista
+                cargarLaboratorios();
             } else {
                 Swal.fire("❌ Error", result.message || "No se pudo actualizar", "error");
             }
@@ -281,7 +338,78 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
+    const btnAgregarEquipo = document.getElementById("btnAgregarEquipo");
+    if (btnAgregarEquipo) {
+        btnAgregarEquipo.addEventListener("click", async () => {
 
+            const select = document.getElementById("laboratorioEquipo");
+            if (!select) {
+                console.error("❌ No se encontró el select #laboratorioEquipo");
+                return;
+            }
+
+            select.innerHTML = "";
+
+            try {
+                const res = await fetch("http://localhost:3000/api/laboratorios");
+                const laboratorios = await res.json();
+
+                laboratorios.forEach(lab => {
+                    const option = document.createElement("option");
+                    option.value = lab.id_laboratorio;
+                    option.textContent = lab.nombre_laboratorio;
+                    select.appendChild(option);
+                });
+
+                const modalElement = document.getElementById("modalAgregarEquipo");
+                if (!modalElement) {
+                    console.error("❌ No se encontró el modal #modalAgregarEquipo");
+                    return;
+                }
+
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+
+            } catch (err) {
+                console.error("❌ Error al obtener laboratorios:", err);
+                Swal.fire("Error", "No se pudieron cargar los laboratorios", "error");
+            }
+        });
+    } else {
+        console.error("❌ No se encontró el botón #btnAgregarEquipo en el DOM.");
+    }
+
+    document.getElementById("btnEliminarEquipo").addEventListener("click", async function () {
+        const id = document.getElementById("editarIdEquipo").value;
+
+        const confirmar = await Swal.fire({
+            title: "¿Eliminar equipo?",
+            text: "Esta acción no se puede deshacer",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        });
+
+        if (confirmar.isConfirmed) {
+            try {
+                const res = await fetch(`http://localhost:3000/api/equipos/${id}`, {
+                    method: "DELETE"
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    Swal.fire("✅ Eliminado", data.message || "Equipo eliminado", "success");
+                    bootstrap.Modal.getInstance(document.getElementById("modalEditarEquipo")).hide();
+                    cargarLaboratorios();
+                } else {
+                    Swal.fire("❌ Error", data.message || "No se pudo eliminar", "error");
+                }
+            } catch (err) {
+                Swal.fire("❌ Error", "Error al conectar con el servidor", "error");
+            }
+        }
+    });
 
     document.addEventListener("click", function (e) {
         if (e.target.classList.contains("btnVerEquipo")) {
@@ -323,45 +451,37 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    document.addEventListener("click", function (e) {
+    document.addEventListener("click", async function (e) {
         if (e.target.classList.contains("btnEditarEquipo")) {
             const idEquipo = e.target.dataset.id;
             const numeroActual = e.target.dataset.numero;
 
+            // Obtener laboratorio actual del equipo
+            const resEquipo = await fetch(`http://localhost:3000/api/equipos/${idEquipo}`);
+            const equipoData = await resEquipo.json();
+            const labActual = equipoData.id_laboratorio;
+
+            // Llenar el select con laboratorios
+            const select = document.getElementById("editarLaboratorioEquipo");
+            select.innerHTML = "";
+
+            const res = await fetch("http://localhost:3000/api/laboratorios");
+            const laboratorios = await res.json();
+
+            laboratorios.forEach(lab => {
+                const option = document.createElement("option");
+                option.value = lab.id_laboratorio;
+                option.textContent = lab.nombre_laboratorio;
+                if (lab.id_laboratorio === labActual) option.selected = true;
+                select.appendChild(option);
+            });
+
+            // Rellenar campos
             document.getElementById("editarIdEquipo").value = idEquipo;
             document.getElementById("editarNumeroEquipo").value = numeroActual;
 
             const modal = new bootstrap.Modal(document.getElementById("modalEditarEquipo"));
             modal.show();
-        }
-    });
-
-    document.getElementById("btnAgregarLaboratorio").addEventListener("click", () => {
-        const modal = new bootstrap.Modal(document.getElementById("modalAgregarLaboratorio"));
-        modal.show();
-    });
-
-    document.getElementById("formAgregarLaboratorio").addEventListener("submit", async function (e) {
-        e.preventDefault();
-
-        const nombre = document.getElementById("nombreLaboratorio").value.trim();
-        const nivel = document.getElementById("nivelLaboratorio").value;
-
-        if (!nombre || !nivel) return Swal.fire("Faltan datos");
-
-        const res = await fetch("http://localhost:3000/api/laboratorios", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nombre_laboratorio: nombre, id_nivel: parseInt(nivel) })
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-            Swal.fire("Éxito", "Laboratorio agregado", "success");
-            bootstrap.Modal.getInstance(document.getElementById("modalAgregarLaboratorio")).hide();
-            cargarLaboratorios();
-        } else {
-            Swal.fire("Error", data.message || "No se pudo agregar", "error");
         }
     });
 
