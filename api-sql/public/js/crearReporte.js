@@ -5,28 +5,47 @@
 const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
 const usuario = JSON.parse(storage.getItem("user"));
 
-// Función para actualizar el dropdown de notificaciones
+async function marcarTodasLeidas() {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) return;
 
+    try {
+        await fetch(`/api/notificaciones/marcar-todas/${user.id_usuario}`, { method: "PUT" });
+        cargarNotificaciones(); // ✅ Ahora es accesible
+    } catch (error) {
+        console.error("Error al marcar todas como leídas:", error);
+    }
+}
 
-document.addEventListener("DOMContentLoaded", async function () {
-    async function cargarNotificaciones() {
-        const user = JSON.parse(localStorage.getItem("user"));
+// ✅ Mover cargarNotificaciones fuera de DOMContentLoaded
+async function cargarNotificaciones() {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) return;
+
+    try {
         const res = await fetch(`/api/notificaciones/${user.id_usuario}`);
         const notificaciones = await res.json();
-    
+
         const notifBox = document.querySelector(".notif-center");
-        notifBox.innerHTML = "";
-    
+        notifBox.innerHTML = `
+            <!-- Botón fijo arriba -->
+            <button onclick="marcarTodasLeidas()" class="dropdown-item text-center text-primary fw-bold sticky-top bg-light border-0 rounded-3 shadow-sm mb-2">
+                Marcar todas como leídas
+            </button>
+        `;
+
         if (notificaciones.length === 0) {
-            notifBox.innerHTML = `
+            notifBox.innerHTML += `
                 <div class="text-center text-muted small py-2">No hay notificaciones nuevas</div>
             `;
         } else {
             notificaciones.forEach(n => {
                 notifBox.innerHTML += `
-                    <div class="d-flex justify-content-between align-items-center position-relative notification-item p-2 rounded border ${n.leida ? 'bg-light' : 'bg-white border-primary'}" data-id="${n.id_notificacion}">
+                    <div class="d-flex justify-content-between align-items-center position-relative notification-item p-2 rounded border 
+                        ${n.leida ? 'bg-light' : 'bg-white border-primary'}" data-id="${n.id_notificacion}">
                         <a href="#" onclick="marcarLeida(${n.id_notificacion})" class="d-flex w-100 text-decoration-none text-dark">
-                            <div class="notif-icon ${n.leida ? 'bg-secondary' : 'bg-primary'} text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                            <div class="notif-icon ${n.leida ? 'bg-secondary' : 'bg-primary'} text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" 
+                                style="width: 40px; height: 40px;">
                                 <i class="fa fa-bell" style="font-size: 20px;"></i>
                             </div>
                             <div class="notif-content ms-2 flex-grow-1">
@@ -38,38 +57,55 @@ document.addEventListener("DOMContentLoaded", async function () {
                             class="position-absolute top-0 end-0 border-0 bg-transparent p-1"
                             style="font-size: 12px; color: black;">
                             <i class="fa fa-times"></i>
-                        </button>                         
+                        </button>                
                     </div>
                 `;
             });
         }
-    
+
         // Mostrar solo la cantidad de notificaciones NO leídas
         const noLeidas = notificaciones.filter(n => !n.leida);
         document.querySelector(".notification").textContent = noLeidas.length;
+    } catch (error) {
+        console.error("Error al cargar notificaciones:", error);
     }
-    
-    // ✅ Declarar funciones globales FUERA de cargarNotificaciones
-    window.marcarLeida = async function(id) {
+}
+
+
+// ✅ Funciones globales para marcar como leída y eliminar notificación
+window.marcarLeida = async function(id) {
+    try {
         await fetch(`/api/notificaciones/${id}/leida`, { method: "PUT" });
         cargarNotificaciones();
-    };
-    
-    window.eliminarNotificacion = async function(id) {
+    } catch (error) {
+        console.error("Error al marcar como leída:", error);
+    }
+};
+
+window.eliminarNotificacion = async function(id) {
+    try {
         await fetch(`/api/notificaciones/${id}`, { method: "DELETE" });
         cargarNotificaciones();
-    };
-    
+    } catch (error) {
+        console.error("Error al eliminar notificación:", error);
+    }
+};
 
+// ✅ Iniciar carga de notificaciones cuando el DOM esté listo
+document.addEventListener("DOMContentLoaded", function () {
     cargarNotificaciones();
-    setInterval(cargarNotificaciones, 10000); // actualiza cada 10 segundos
-    await cargarLaboratorios();
+    setInterval(cargarNotificaciones, 10000); // Actualizar cada 10 segundos
 });
+
+
+
 
 async function cargarLaboratorios() {
     try {
         const response = await fetch("http://localhost:3000/laboratorios");
         const laboratorios = await response.json();
+
+        console.log("Laboratorios cargados:", laboratorios); // Verifica que los laboratorios se reciban correctamente
 
         let selectLaboratorios = document.getElementById("laboratorioSelect");
         selectLaboratorios.innerHTML = "<option disabled selected value=''>Selecciona un laboratorio</option>";
@@ -95,6 +131,11 @@ async function cargarLaboratorios() {
         console.error("Error al obtener laboratorios:", error);
     }
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    cargarLaboratorios(); 
+});
+
 
 async function cargarEquipos(idLaboratorio) {
     try {
