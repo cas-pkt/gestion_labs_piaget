@@ -162,7 +162,8 @@
                             </li>
                             <li class="nav-item topbar-user dropdown hidden-caret">
                                 <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#">
-                                    <span class="profile-username">Hola, <span id="userName"></span></span>
+                                    <span class="profile-username ">Hola, <span class="fw-bold"
+                                            id="userName"></span></span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-user animated fadeIn">
                                     <li>
@@ -190,35 +191,44 @@
                 <div class="page-inner">
                     <div class="card">
                         <div class="card-header">
-                            <div class="card-title">Historial de Reportes</div>
-                            <div class="row">
-                                <div class="col-md-2">
-                                    <label>Filtrar por Fecha</label>
-                                    <input type="date" id="filterFecha" class="form-control">
-                                </div>
-                                <div class="col-md-2">
-                                    <label>Filtrar por Usuario</label>
-                                    <select id="filterUsuario" class="form-control">
-                                        <option value="">Todos</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <label>Filtrar por Laboratorio</label>
-                                    <select id="filterLaboratorio" class="form-control">
-                                        <option value="">Todos</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <label>Filtrar por Nivel</label>
-                                    <select id="filterNivel" class="form-control">
-                                        <option value="">Todos</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <label>Filtrar por Estatus</label>
-                                    <select id="filterEstatus" class="form-control">
-                                        <option value="">Todos</option>
-                                    </select>
+                            <div class="card-title  mb-3">Historial de Reportes</div>
+                            <div class="filtros-container p-3 rounded shadow-sm mb-4 bg-panel">
+                                <div class="row align-items-end g-3">
+                                    <div class="col-md-2">
+                                        <label for="filterFecha" class="form-label">
+                                            <i class="fas fa-calendar-alt me-1 text-primary"></i> Filtrar por Fecha
+                                        </label>
+                                        <input type="date" id="filterFecha" class="form-control">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="filterUsuario" class="form-label">
+                                            <i class="fas fa-user me-1 text-primary"></i> Filtrar por Usuario
+                                        </label>
+                                        <select id="filterUsuario" class="form-select"></select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="filterLaboratorio" class="form-label">
+                                            <i class="fas fa-vial me-1 text-primary"></i> Filtrar por Laboratorio
+                                        </label>
+                                        <select id="filterLaboratorio" class="form-select"></select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="filterNivel" class="form-label">
+                                            <i class="fas fa-graduation-cap me-1 text-primary"></i> Filtrar por Nivel
+                                        </label>
+                                        <select id="filterNivel" class="form-select"></select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="filterEstatus" class="form-label">
+                                            <i class="fas fa-thumbtack me-1 text-primary"></i> Filtrar por Estatus
+                                        </label>
+                                        <select id="filterEstatus" class="form-select"></select>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button id="btnLimpiarFiltros" class="btn btn-outline-primary w-100">
+                                            <i class="fas fa-broom me-1"></i> Limpiar filtros
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

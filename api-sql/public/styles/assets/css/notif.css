@@ -151,7 +151,7 @@
     .nivel-badge {
         color: white;
     }
-    
+
     /* Colores personalizados para los niveles */
     /* 1ro */
     .bg-custom-nivel-1 {
@@ -440,7 +440,7 @@
         transition: 0.3s ease;
     }
 
-    
+
     .nivel-lab-label {
         font-weight: 600;
         font-size: 1rem;
@@ -460,8 +460,35 @@
         margin-right: 5px;
         transition: background-color 0.3s ease;
     }
-    
+
     #nivelTabs .nav-link.active {
-        background-color: #1e40af; /* azul fuerte */
+        background-color: #1e40af;
+        /* azul fuerte */
         color: #fff;
+    }
+
+    .form-label {
+        font-weight: 500;
+    }
+
+    .card {
+        background-color: #fdfdfd;
+        border-radius: 12px;
+    }
+
+    #searchInput {
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 0.95rem;
+    }
+
+    select.form-select,
+    input.form-control {
+        border-radius: 10px;
+        font-size: 0.9rem;
+    }
+
+    #btnLimpiarFiltros {
+        border-radius: 10px;
+        font-size: 0.9rem;
     }

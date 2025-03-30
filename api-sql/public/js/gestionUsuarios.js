@@ -91,23 +91,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.getElementById(id).addEventListener("input", aplicarFiltros);
     });
 
-    function obtenerClaseNivel(nivelNombre) {
-        const niveles = {
-            "Primero Primaria": 1,
-            "Segundo Primaria": 2,
-            "Tercero Primaria": 3,
-            "Cuarto Primaria": 4,
-            "Quinto Primaria": 5,
-            "Sexto Primaria": 6,
-            "Primero Secundaria": 7,
-            "Segundo Secundaria": 8,
-            "Tercero Secundaria": 9
-        };
-
-        const id = niveles[nivelNombre];
-        return id ? `bg-custom-nivel-${id}` : "bg-secondary";
-    }
-
     function mostrarUsuarios(lista) {
         listaUsuarios.innerHTML = "";
 

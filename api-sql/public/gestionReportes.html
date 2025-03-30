@@ -165,7 +165,8 @@
                             </li>
                             <li class="nav-item topbar-user dropdown hidden-caret">
                                 <a class="dropdown-toggle profile-pic" data-bs-toggle="dropdown" href="#">
-                                    <span class="profile-username">Hola, <span id="userName"></span></span>
+                                    <span class="profile-username">Hola, <span class="fw-bold"
+                                            id="userName"></span></span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-user animated fadeIn">
                                     <li>
@@ -195,57 +196,57 @@
                             <div class="bg-panel">
                                 <h4 class="mb-4 fw-bold">Seguimiento de Reportes</h4>
 
-                                <!-- 🎯 Filtros avanzados -->
-                                <div class="bg-light p-4 rounded shadow-sm mb-4">
-                                    <div class="row g-3 align-items-end mb-4">
-                                        <div class="col-md-2">
-                                            <label for="filtroFecha" class="form-label fw-semibold">Filtrar por
-                                                Fecha</label>
-                                            <input type="date" id="filtroFecha" class="form-control">
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label for="filtroUsuario" class="form-label fw-semibold">Filtrar por
-                                                Usuario</label>
-                                            <select id="filtroUsuario" class="form-select">
-                                                <option value="">Todos</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label for="filtroLaboratorio" class="form-label fw-semibold">Filtrar por
-                                                Laboratorio</label>
-                                            <select id="filtroLaboratorio" class="form-select">
-                                                <option value="">Todos</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label for="filtroNivel" class="form-label fw-semibold">Filtrar por
-                                                Nivel</label>
-                                            <select id="filtroNivel" class="form-select">
-                                                <option value="">Todos</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label for="filtroEstatus" class="form-label fw-semibold">Filtrar por
-                                                Estatus</label>
-                                            <select id="filtroEstatus" class="form-select">
-                                                <option value="">Todos</option>
-                                                <option value="Pendiente">Pendiente</option>
-                                                <option value="En proceso">En proceso</option>
-                                                <option value="Resuelto">Resuelto</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2 d-flex align-items-end">
-                                            <button id="btnLimpiarFiltros" class="btn btn-outline-secondary w-100">
-                                                <i class="fas fa-eraser me-1"></i> Limpiar filtros
-                                            </button>
-                                        </div>
-                                        <div class="col-md-6 d-flex align-items-end">
-                                            <label for="filtroTexto" class="form-label fw-semibold">Buscar por equipo o
-                                                descripción</label>
+                                <!-- 🔍 Filtros - Ajustados para mayor equilibrio -->
+                                <div class="bg-panel p-4 rounded shadow-sm mb-4">
+                                    <div class="row align-items-end g-3 mb-3">
+                                        <!-- Buscador por texto - ahora solo ocupa 6 columnas -->
+                                        <div class="col-md-6">
+                                            <label for="filtroTexto" class="form-label fw-semibold text-dark">
+                                                <i class="fas fa-search me-2 text-primary"></i> Buscar por equipo o
+                                                descripción
+                                            </label>
                                             <input type="text" id="filtroTexto" class="form-control"
                                                 placeholder="Ej. PC-1, pantalla rota">
                                         </div>
+                                    </div>
 
+                                    <div class="row align-items-end g-3">
+                                        <div class="col-md-2">
+                                            <label for="filtroFecha" class="form-label">
+                                                <i class="fas fa-calendar-alt me-1 text-primary"></i> Filtrar por Fecha
+                                            </label>
+                                            <input type="date" id="filtroFecha" class="form-control">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="filtroUsuario" class="form-label">
+                                                <i class="fas fa-user me-1 text-primary"></i> Filtrar por Usuario
+                                            </label>
+                                            <select id="filtroUsuario" class="form-select"></select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="filtroLaboratorio" class="form-label">
+                                                <i class="fas fa-vial me-1 text-primary"></i> Filtrar por Laboratorio
+                                            </label>
+                                            <select id="filtroLaboratorio" class="form-select"></select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="filtroNivel" class="form-label">
+                                                <i class="fas fa-graduation-cap me-1 text-primary"></i> Filtrar por
+                                                Nivel
+                                            </label>
+                                            <select id="filtroNivel" class="form-select"></select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="filtroEstatus" class="form-label">
+                                                <i class="fas fa-thumbtack me-1 text-primary"></i> Filtrar por Estatus
+                                            </label>
+                                            <select id="filtroEstatus" class="form-select"></select>
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-end">
+                                            <button class="btn btn-outline-primary w-100" id="btnLimpiarFiltros">
+                                                <i class="fas fa-broom me-1"></i> Limpiar filtros
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 

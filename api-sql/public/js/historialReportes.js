@@ -21,6 +21,23 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    function obtenerClaseNivel(nivelNombre) {
+        const mapa = {
+            "1ro de Primaria": 1,
+            "2do de Primaria": 2,
+            "3ro de Primaria": 3,
+            "4to de Primaria": 4,
+            "5to de Primaria": 5,
+            "6to de Primaria": 6,
+            "1ro de Secundaria": 7,
+            "2do de Secundaria": 8,
+            "3ro de Secundaria": 9
+        };
+    
+        const id = mapa[nivelNombre];
+        return id ? `bg-custom-nivel-${id}` : "bg-secondary";
+    }    
+
     function renderizarHistorial(reportes) {
         contenedor.innerHTML = "";
 
@@ -68,7 +85,9 @@ document.addEventListener("DOMContentLoaded", function () {
                                     <i class="fas fa-desktop me-1"></i> ${reporte.numero_equipo} - ${reporte.nombre_laboratorio}
                                 </h6>
                                 <span class="badge bg-dark me-1"><i class="fas fa-user me-1"></i> ${reporte.nombre || "Desconocido"}</span>
-                                <span class="badge bg-info text-dark"><i class="fas fa-graduation-cap me-1"></i> ${reporte.nivel_usuario || "No asignado"}</span>
+                                <span class="badge ${obtenerClaseNivel(reporte.nivel_usuario)} nivel-badge">
+                                    <i class="fas fa-graduation-cap me-1"></i> ${reporte.nivel_usuario || "No asignado"}
+                                </span>
                             </div>
                             <div class="text-end">
                                 <span class="badge bg-${badgeColor} badge-estatus">${reporte.estatus}</span>
@@ -98,6 +117,16 @@ document.addEventListener("DOMContentLoaded", function () {
             contenedor.appendChild(contenedorFecha);
         }
     }
+
+    document.getElementById("btnLimpiarFiltros").addEventListener("click", () => {
+        filtros.fecha.value = "";
+        filtros.usuario.value = "";
+        filtros.laboratorio.value = "";
+        filtros.nivel.value = "";
+        filtros.estatus.value = "";
+        aplicarFiltros(); // ✅ Esta sí existe
+    });
+    
 
     function cargarFiltros(reportes) {
         const usuarios = new Set();
