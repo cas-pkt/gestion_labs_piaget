@@ -132,6 +132,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <div class="col-md-4">
                         <div class="card mb-3 shadow-sm">
                             <div class="card-body text-center">
+                            <img src="../styles/assets/img/computer-icon.png" alt="Equipo de Cómputo" style="width: 80px; height: 80px; margin-bottom: 10px;" />
                                 <h5 class="card-title">${equipo.numero_equipo}</h5>
                                 <p class="card-text">
                                     Estado: <span class="badge ${estadoBadgeClass}">${estado}</span>
@@ -269,7 +270,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const data = await res.json();
 
         if (res.ok) {
-            Swal.fire("✅ Éxito", "Laboratorio agregado correctamente", "success");
+            Swal.fire(" Éxito", "Laboratorio agregado correctamente", "success");
             bootstrap.Modal.getInstance(document.getElementById("modalAgregarLaboratorio")).hide();
             document.getElementById("formAgregarLaboratorio").reset(); // Solo se limpia aquí
             cargarLaboratorios();
@@ -297,7 +298,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const data = await response.json();
 
         if (response.ok) {
-            Swal.fire("✅ Éxito", "Equipo agregado correctamente", "success");
+            Swal.fire(" Éxito", "Equipo agregado correctamente", "success");
             document.getElementById("formAgregarEquipo").reset();
             bootstrap.Modal.getInstance(document.getElementById("modalAgregarEquipo")).hide();
             cargarLaboratorios(); // Recargar vista
@@ -327,7 +328,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const result = await response.json();
 
             if (response.ok) {
-                Swal.fire("✅ Éxito", result.message, "success");
+                Swal.fire(" Éxito", result.message, "success");
                 bootstrap.Modal.getInstance(document.getElementById("modalEditarEquipo")).hide();
                 cargarLaboratorios();
             } else {
@@ -399,7 +400,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 const data = await res.json();
                 if (res.ok) {
-                    Swal.fire("✅ Eliminado", data.message || "Equipo eliminado", "success");
+                    Swal.fire(" Eliminado", data.message || "Equipo eliminado", "success");
                     bootstrap.Modal.getInstance(document.getElementById("modalEditarEquipo")).hide();
                     cargarLaboratorios();
                 } else {

@@ -177,8 +177,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                         card.className = "col-md-6 col-lg-4 mb-4";
                         card.innerHTML = `
                         <div class="card shadow-sm border-start border-4 border-primary h-100">
-                            <div class="card-body">
-                                <h5 class="card-title mb-1 fw-bold">${reporte.numero_equipo}</h5>
+                            <div class="card-body text-center">
+                            <div class="text-center mb-3">
+                                <img src="../styles/assets/img/computer-icon.png" alt="Equipo de Cómputo" style="width: 80px; height: 80px; margin-bottom: 10px;" />
+                            </div>
+                            <h5 class="card-title mb-1 fw-bold">${reporte.numero_equipo}</h5>
                                 <h6 class="card-subtitle text-muted mb-2">${reporte.nombre_laboratorio}</h6>
                                 <p class="mb-1"><strong>Usuario:</strong> ${reporte.nombre_usuario}</p>
                                 <p class="mb-1"><strong>Descripción:</strong> ${reporte.descripcion}</p>
@@ -464,7 +467,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     `;
                 });
             }
-
             // Mostrar la cantidad de no leídas
             const noLeidas = notificaciones.filter(n => !n.leida);
             document.querySelector(".notification").textContent = noLeidas.length;

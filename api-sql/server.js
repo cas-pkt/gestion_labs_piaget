@@ -1200,7 +1200,6 @@ app.get('/api/roles', async (req, res) => {
     }
 });
 
-<<<<<<< HEAD
 app.get("/api/niveles", async (req, res) => {
     try {
         const pool = await sql.connect(dbConfig);
@@ -1209,56 +1208,6 @@ app.get("/api/niveles", async (req, res) => {
     } catch (err) {
         console.error("❌ Error al obtener niveles:", err);
         res.status(500).json({ message: "Error al obtener niveles", error: err.message });
-=======
-// Ruta para obtener laboratorios asignados a un usuario y su nivel
-app.get("/api/laboratorios/:id_usuario", async (req, res) => {
-    const { id_usuario } = req.params;
-    
-    try {
-        let pool = await sql.connect(dbConfig); // Asegúrate de tener el dbConfig configurado
-        let result = await pool.request()
-            .input("id_usuario", sql.Int, id_usuario)
-            .query(`
-                SELECT 
-                    l.id_laboratorio, 
-                    l.nombre_laboratorio, 
-                    COUNT(r.id_reporte) AS total_reportes,
-                    n.nombre_nivel  
-                FROM Laboratorios l
-                JOIN Usuarios u ON l.id_laboratorio = u.id_laboratorio
-                JOIN Niveles n ON u.id_nivel = n.id_nivel  
-                LEFT JOIN Reportes r ON r.id_laboratorio = l.id_laboratorio
-                WHERE u.id_usuario = @id_usuario
-                GROUP BY l.id_laboratorio, l.nombre_laboratorio, n.nombre_nivel;
-
-            `);
-
-        res.json(result.recordset);
-    } catch (error) {
-        console.error("Error al obtener laboratorios:", error);
-        res.status(500).json({ message: "Error al obtener los laboratorios", error: error.message });
-    }
-});
-
-
-app.get("/api/reporte/:id_laboratorio", async (req, res) => {
-    const { id_laboratorio } = req.params;
-
-    try {
-        let pool = await sql.connect(dbConfig); // Asegúrate de tener el dbConfig configurado
-        let result = await pool.request()
-            .input("id_laboratorio", sql.Int, id_laboratorio)
-            .query(`
-                SELECT id_reporte, descripcion, fecha_hora, estatus
-                FROM Reportes
-                WHERE id_laboratorio = @id_laboratorio
-            `);
-
-        res.json(result.recordset); // Debería devolver los reportes encontrados
-    } catch (error) {
-        console.error("Error al obtener los reportes:", error);
-        res.status(500).json({ message: "Error al obtener los reportes", error: error.message });
->>>>>>> be42892363aa9b87e9619a479c2b2a50bba31b59
     }
 });
 
