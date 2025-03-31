@@ -1211,6 +1211,60 @@ app.get("/api/niveles", async (req, res) => {
     }
 });
 
+app.get("/api/laboratorios/:id_usuario", async (req, res) => {
+    const { id_usuario } = req.params;
+
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("id_usuario", sql.Int, id_usuario)
+            .query(`
+                SELECT l.id_laboratorio, l.nombre_laboratorio, n.nombre_nivel,
+                COUNT(r.id_reporte) AS total_reportes
+                FROM Laboratorios l
+                JOIN Usuarios u ON l.id_laboratorio = u.id_laboratorio
+                JOIN Niveles n ON u.id_nivel = n.id_nivel
+                LEFT JOIN Reportes r ON r.id_laboratorio = l.id_laboratorio
+                WHERE u.id_usuario = @id_usuario
+                GROUP BY l.id_laboratorio, l.nombre_laboratorio, n.nombre_nivel;
+            `);
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "No se encontraron laboratorios" });
+        }
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error("Error al obtener laboratorios:", error);
+        res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    }
+});
+
+app.get("/api/reporte/:id_laboratorio", async (req, res) => {
+    const { id_laboratorio } = req.params;
+
+    try {
+        let pool = await sql.connect(dbConfig);
+        let result = await pool.request()
+            .input("id_laboratorio", sql.Int, id_laboratorio)
+            .query(`
+                SELECT id_reporte, descripcion, fecha_hora, estatus
+                FROM Reportes
+                WHERE id_laboratorio = @id_laboratorio
+            `);
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "No hay reportes para este laboratorio" });
+        }
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error("Error al obtener reportes:", error);
+        res.status(500).json({ message: "Error al obtener reportes", error: error.message });
+    }
+});
+
+
 
 import("open").then((open) => {
     open.default(`http://localhost:${PORT}`);
